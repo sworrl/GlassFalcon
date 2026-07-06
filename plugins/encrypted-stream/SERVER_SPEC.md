@@ -209,5 +209,3 @@ wss.on('connection', (ws, req) => {
 });
 ```
 
-That's the whole server: a token minter and a fan-out. Everything that makes the stream *private*
-lives in the phone and the browser, exactly as asked.
