@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- USB device filter: RC240 (0x2ca3:0x001f) and Mavic 2 Pro direct (same VID) -->
+<resources>
+    <usb-device vendor-id="11427" product-id="31" />    <!-- 0x2ca3:0x001f RC240 / wm240 -->
+    <usb-device vendor-id="11427" product-id="32" />    <!-- 0x2ca3:0x0020 RC240 variant  -->
+</resources>

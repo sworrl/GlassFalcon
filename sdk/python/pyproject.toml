@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "glassfalcon"
+version = "0.1.0"
+description = "FOSS SDK for DJI drone software & firmware development — native DUML protocol, telemetry, missions, video"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "GPL-3.0-or-later" }
+authors = [{ name = "Glass Falcon" }]
+keywords = ["dji", "drone", "duml", "sdk", "firmware", "uav", "mavic", "telemetry"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Communications",
+]
+# Zero runtime dependencies — pure stdlib. Optional extras enable transports.
+dependencies = []
+
+[project.optional-dependencies]
+serial = ["pyserial>=3.5"]   # DUMLConnection over /dev/ttyACM (CDC-ACM)
+usb = ["pyusb>=1.2"]         # raw USB transport
+
+[project.urls]
+Homepage = "https://github.com/sworrl/DJI"
+Source = "https://github.com/sworrl/DJI/tree/main/sdk"
+
+[tool.setuptools.packages.find]
+where = ["src"]

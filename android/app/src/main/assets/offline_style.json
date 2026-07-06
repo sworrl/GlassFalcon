@@ -1,0 +1,12 @@
+{
+  "version": 8,
+  "name": "GlassFalcon Offline Fallback",
+  "sources": {},
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "#0c0c0c" }
+    }
+  ]
+}

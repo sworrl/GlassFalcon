@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path name="flight_records" path="flight_records/" />
+    <external-files-path name="dji_imports" path="dji_imports/" />
+    <!-- Offloaded photos/videos live in the PUBLIC DCIM/GlassFalcon folder (not app-private
+         external-files), so sharing them via FileProvider needs an external-path entry rooted at
+         external storage. Scoped to the GlassFalcon subfolder, not all of DCIM. -->
+    <external-path name="gallery_media" path="DCIM/GlassFalcon/" />
+</paths>

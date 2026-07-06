@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GlassFalcon, Live</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #050810; color: #c8d0dc;
+    font-family: -apple-system, system-ui, sans-serif; }
+  #wrap { position: fixed; inset: 0; display: grid; place-items: center; }
+  canvas { max-width: 100%; max-height: 100%; background: #000;
+    box-shadow: 0 0 60px rgba(0,0,0,.6); }
+  #status { position: fixed; top: 0; left: 0; right: 0; padding: 10px 14px;
+    font-size: 13px; letter-spacing: .3px; display: flex; align-items: center; gap: 8px;
+    background: linear-gradient(#050810cc, transparent); pointer-events: none; }
+  #dot { width: 9px; height: 9px; border-radius: 50%; background: #667788; }
+  #dot.live { background: #00cc44; box-shadow: 0 0 8px #00cc44; }
+  #dot.err  { background: #ff3333; }
+  .brand { color: #c8902a; font-weight: 700; }
+  #msg { position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
+    padding: 24px; font-size: 15px; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div id="wrap"><canvas id="v" width="16" height="9"></canvas></div>
+  <div id="status"><span id="dot"></span><span class="brand">GlassFalcon</span>&nbsp;<span id="txt">connecting…</span></div>
+  <div id="msg" hidden></div>
+
+<script>
+// GlassFalcon encrypted-stream viewer, reference implementation.
+// Receives AES-256-GCM-encrypted H.264 access units over WebSocket, decrypts with the key carried
+// ONLY in this page's URL #fragment (never sent to the server), and decodes with WebCodecs. The
+// relay serving this page can decrypt none of it. See STREAMING_SERVER_SPEC.md.
+(async () => {
+  const dot = document.getElementById('dot');
+  const txt = document.getElementById('txt');
+  const msgEl = document.getElementById('msg');
+  const canvas = document.getElementById('v');
+  const ctx2d = canvas.getContext('2d');
+  const setStatus = (t, cls) => { txt.textContent = t; dot.className = cls || ''; };
+  const fatal = (html) => { msgEl.hidden = false; msgEl.innerHTML = html; setStatus('stopped', 'err'); };
+
+  if (!('VideoDecoder' in window)) {
+    return fatal('This browser has no <b>WebCodecs</b> support.<br>Open in a recent Chrome, Edge, or Chromium-based browser.');
+  }
+
+  // ── Parse streamId (path), viewer token (?t=), and key (#k=) ──
+  const parts = location.pathname.split('/').filter(Boolean);   // ['watch', '<streamId>']
+  const streamId = parts[parts.length - 1];
+  const token = new URLSearchParams(location.search).get('t') || '';
+  const keyB64 = new URLSearchParams(location.hash.slice(1)).get('k') || '';
+  if (!streamId || !token || !keyB64) return fatal('This link is incomplete or has expired.');
+
+  const b64urlToBytes = (s) => {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(s);
+    const b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  };
+
+  let key;
+  try {
+    key = await crypto.subtle.importKey('raw', b64urlToBytes(keyB64), 'AES-GCM', false, ['decrypt']);
+  } catch (e) { return fatal('Invalid decryption key in the link.'); }
+
+  // ── WebCodecs decoder → canvas ──
+  let configured = false, gotKey = false, codec = '';
+  const decoder = new VideoDecoder({
+    output: (frame) => {
+      if (canvas.width !== frame.displayWidth || canvas.height !== frame.displayHeight) {
+        canvas.width = frame.displayWidth; canvas.height = frame.displayHeight;
+      }
+      ctx2d.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      frame.close();
+    },
+    error: (e) => setStatus('decoder error', 'err'),
+  });
+
+  const decrypt = async (nonce, ct) =>
+    new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, key, ct));
+
+  const handle = async (buf) => {
+    const type = buf[0];
+    const nonce = buf.subarray(1, 13);
+    const ct = buf.subarray(13);
+    let plain;
+    try { plain = await decrypt(nonce, ct); }
+    catch (e) { return; }                        // bad tag / not for us, drop silently
+
+    if (type === 0x01) {                          // INIT: { codec }
+      const info = JSON.parse(new TextDecoder().decode(plain));
+      if (!configured || info.codec !== codec) {
+        codec = info.codec;
+        try { decoder.configure({ codec, optimizeForLatency: true }); configured = true; }
+        catch (e) { fatal('Unsupported video codec: ' + codec); }
+      }
+    } else if (type === 0x02) {                    // MEDIA: [ts(8)][keyframe(1)][annexb AU]
+      if (!configured) return;
+      const dv = new DataView(plain.buffer, plain.byteOffset, plain.byteLength);
+      const ts = Number(dv.getBigUint64(0, false));
+      const keyframe = plain[8] === 1;
+      const au = plain.subarray(9);
+      if (!gotKey && !keyframe) return;            // wait for the first keyframe
+      gotKey = true;
+      try {
+        decoder.decode(new EncodedVideoChunk({
+          type: keyframe ? 'key' : 'delta', timestamp: ts, data: au,
+        }));
+        setStatus('live', 'live');
+      } catch (e) { /* transient, next keyframe recovers */ }
+    }
+  };
+
+  // ── WebSocket (receive-only). Serialize handling so frames decode in arrival order. ──
+  const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const ws = new WebSocket(`${wsProto}//${location.host}/sub/${streamId}?t=${encodeURIComponent(token)}`);
+  ws.binaryType = 'arraybuffer';
+  let chain = Promise.resolve();
+  ws.onopen = () => setStatus('waiting for video…', 'live');
+  ws.onmessage = (ev) => { const b = new Uint8Array(ev.data); chain = chain.then(() => handle(b)); };
+  ws.onclose = () => fatal('The stream has ended.<br><span style="opacity:.6">This link has burned.</span>');
+  ws.onerror = () => setStatus('connection error', 'err');
+})();
+</script>
+</body>
+</html>
