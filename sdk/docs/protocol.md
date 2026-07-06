@@ -179,9 +179,17 @@ elsewhere.
   corners simultaneously to cut motors mid-flight if the aircraft loses
   control. This is independent of any software command and worth surfacing in
   UI documentation/help text even though it isn't something this SDK sends.
-- **The 30 m cap is lifted by streaming mobile GPS, not by any parameter write.**
-  Confirmed live 2026-07-05: the FC clamps altitude/distance to 30 m until the app
-  streams the phone's GPS to the flight controller via `cmd_set=0x03, cmd_id=0x20`
+- **The 30 m hard limit is enforced by a firmware-level physical-device authentication
+  handshake, not a parameter or mode.** Confirmed 2026-07-06 via kprobe: the app
+  must send continuous `cmd_set=0x11, cmd_id=0x43` (HMS) authentication frames
+  (~1 Hz) containing a device-specific static token (16 B) + per-frame signature
+  (32 B, algorithm: likely HMAC-SHA256). Without this handshake running, the FC
+  refuses to arm above 30m altitude or distance, regardless of beginner-mode,
+  GPS, or any `0x03/0xf8`/`0xf9` parameter write. This is a cryptographic
+  device-binding gate, not a software policy. See
+  [`docs/2026-07-06-0x11-handshake-discovery.md`](../docs/2026-07-06-0x11-handshake-discovery.md)
+  in the GlassFalcon repo for the full reverse engineering: frame structure,
+  device token analysis, capture data, and Frida-based extraction hooks
   (Send-GPS-To-Flyc). DJI GO 4 sends **zero** limit-param writes at any point, the
   30 m envelope is purely a "no mobile GPS yet" state, not a stored parameter. Two
   things that do **NOT** lift it: (a) FC-parameter writes (below), GO 4 never
@@ -256,3 +264,67 @@ elsewhere.
 
 Response parsers (`parse_version_inquiry`, `parse_serial_number`,
 `parse_camera_state`) decode ACK payloads back into dicts.
+
+## cmd_set 0x11: HMS (Hardware Management System) / Device Authentication
+
+**Critical: This command gates the 30m hard altitude/distance limit.**
+
+The aircraft enforces a firmware-level physical-device authentication gate via
+`cmd_set=0x11` frames. Without valid repeating `0x11/0x43` frames, the FC refuses
+to arm beyond 30m, regardless of beginner-mode or any other parameter.
+
+### Frame `0x11/0x43` (84 bytes, sent ~1 Hz during flight)
+
+```
+[0:4]    0x50000000              frame length (constant: 0x50 = 80 bytes inner)
+[4:36]   <random 32 bytes>       nonce (per-frame, app-generated)
+[36:52]  <fixed 16 bytes>        device token (static per aircraft/RC combo)
+[52:84]  <random 32 bytes>       signature (per-frame, algorithm unknown)
+```
+
+**Example device token** (from a wm240 Mavic 2):
+```
+d3006306bd44fe08200bfd10025716a5
+```
+
+**Properties:**
+- Device token is **static** across power cycles, app restarts, FC reboots, cable pulls
+- Nonce is **unique every frame**, random, never repeating
+- Signature is **unique every frame**, likely HMAC-SHA256(secret_key, nonce || device_token)
+- Must repeat continuously; if missing, FC locks to 30m
+
+### Frame `0x11/0x15` (64 bytes, sent once at connection)
+
+```
+6fe71e0e4e93ca434ab8b9c780107fb75ae4bb529bae2519af3f10db47015933
+8bcf9738eded28e1d2ca61b30ae603feb384f4d3162d33c0be86be2c26d64a8f
+```
+
+Two 32-byte blocks. Likely an **enrollment token** or **session-key negotiation**
+frame that establishes the authentication context. Constant across the entire session.
+
+### Signature Algorithm (Unknown)
+
+The 32-byte per-frame signature is computed by:
+1. Taking the nonce (32 B) and device token (16 B)
+2. Processing them with a symmetric cipher or MAC function
+3. Producing a 32-byte output (HMAC-SHA256, AES-CMAC, or proprietary DJI cipher)
+4. Appending to the frame
+
+The algorithm is implemented in GO 4's native library `libDJIFlySafeCore.so`,
+function `dji::flysafe::NetworkingRequest::GetRequestParamsAndSignature()`,
+which calls either `SHA256Signature()` (most likely) or `AES256Encrypt()` internally.
+
+Key material is derived via whitebox cryptography (`GetWhiteBoxKeyChainString()`),
+making static extraction of the key infeasible; **dynamic hooking with Frida is required.**
+
+### Reverse Engineering Status
+
+✅ Frame structure (fully mapped)
+✅ Device token (static, captured)
+❌ Signature algorithm (HMAC-SHA256 hypothesis, needs Frida hook confirmation)
+❌ Key material (whitebox-protected, needs Frida interception)
+❌ Device token derivation (unknown if per-model, per-device, or pre-shared)
+
+See [`docs/2026-07-06-0x11-handshake-discovery.md`](../docs/2026-07-06-0x11-handshake-discovery.md)
+in the GlassFalcon repo for Frida hook code to extract the signature computation live.
