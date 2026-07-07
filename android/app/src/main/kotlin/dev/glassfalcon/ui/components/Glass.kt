@@ -23,6 +23,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeStyle
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import dev.glassfalcon.ui.FrostDark
 
 /** Marks the content BEHIND the glass panels (camera feed, map) as the thing that should show
  *  through blurred. Put once on the background-most composable of a screen; pass the same
@@ -64,6 +65,8 @@ fun Modifier.glass(
     baseAlpha: Float = 0.18f,
     haze: HazeState? = null,
     border: Boolean = true,
+    frosted: Boolean = false,
+    frostAlpha: Float = 0.62f,
 ): Modifier {
     return this
         .clip(shape)
@@ -87,6 +90,22 @@ fun Modifier.glass(
                 // own text/icons, not from darkening the scene behind it.
                 m
             }
+        }
+        // Frosted backing for CONTROL panels. Clear glass reads fine over a normal scene, but a
+        // pilot pointing the camera at bright/overcast/white sky loses gold-and-white controls
+        // against the glare, drop shadows alone can't save a light glyph on a near-white field.
+        // Backdrop blur (Haze) is disabled app-wide here (it fogs the whole video feed), so
+        // instead this lays a dark, semi-opaque "frost" pane UNDER the tint/specular layers:
+        // it knocks the bright background down to a consistently dark glass no matter what's
+        // behind it, which is what actually guarantees the controls stay readable. Decorative
+        // and data-only panels leave this off and stay truly clear.
+        .let { m ->
+            if (!frosted) m else m.background(
+                Brush.verticalGradient(
+                    0.0f to FrostDark.copy(alpha = frostAlpha),
+                    1.0f to FrostDark.copy(alpha = (frostAlpha - 0.10f).coerceAtLeast(0f)),
+                )
+            )
         }
         // Body tint, a soft top-lit gradient (brightest at the top where light lands, faint
         // return glow at the bottom), the base "material" colour.

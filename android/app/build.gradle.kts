@@ -119,6 +119,11 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
+    // At-rest encryption: EncryptedSharedPreferences for secrets (API keys) + a MasterKey in the
+    // Android Keystore (TEE/StrongBox-backed where available). The app's own AES-256-GCM file
+    // encryption (SecureStore) uses the platform Keystore directly and needs no extra dep.
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.core:core-ktx:1.13.0")

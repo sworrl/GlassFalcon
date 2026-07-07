@@ -29,15 +29,19 @@ object WindyWeather {
     private const val KEY_WEBCAM = "windy_webcam_key"
     private const val POINT_URL = "https://api.windy.com/api/point-forecast/v2"
 
-    fun pointKey(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_POINT, "") ?: ""
-    fun mapKey(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_MAP, "") ?: ""
-    fun webcamKey(ctx: Context): String =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_WEBCAM, "") ?: ""
+    // Windy keys are secrets → EncryptedSharedPreferences (Keystore-backed), with a one-time
+    // migration off the old plaintext store.
+    private fun prefs(ctx: Context) =
+        SecureStore.encryptedPrefs(ctx, "glassfalcon_weather_secure").also {
+            SecureStore.migratePlaintextPrefs(ctx, PREFS, it)
+        }
+
+    fun pointKey(ctx: Context): String = prefs(ctx).getString(KEY_POINT, "") ?: ""
+    fun mapKey(ctx: Context): String = prefs(ctx).getString(KEY_MAP, "") ?: ""
+    fun webcamKey(ctx: Context): String = prefs(ctx).getString(KEY_WEBCAM, "") ?: ""
 
     fun setKeys(ctx: Context, point: String?, map: String?, webcam: String?) {
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().apply {
+        prefs(ctx).edit().apply {
             point?.let { putString(KEY_POINT, it.trim()) }
             map?.let { putString(KEY_MAP, it.trim()) }
             webcam?.let { putString(KEY_WEBCAM, it.trim()) }

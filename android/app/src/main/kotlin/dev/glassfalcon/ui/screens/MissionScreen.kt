@@ -22,9 +22,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import dev.glassfalcon.R
 import dev.glassfalcon.core.*
 import dev.glassfalcon.ui.*
 import dev.glassfalcon.ui.components.glass
@@ -242,7 +244,11 @@ private fun ManualSurveyPanel(vm: FlightViewModel, drone: DroneState) {
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     MissionMode.entries.forEach { m ->
                         FilterChip(selected = mode == m, onClick = { mode = m },
-                            label = { Text(m.label, fontSize = 11.sp) })
+                            label = { Text(m.label, fontSize = 11.sp) },
+                            leadingIcon = if (m == MissionMode.ORBIT) {
+                                { Icon(painterResource(R.drawable.ic_hud_orbit), contentDescription = null,
+                                    tint = Gold, modifier = Modifier.size(16.dp)) }
+                            } else null)
                     }
                 }
                 SurveyField("Alt (m)", altStr) { altStr = it }

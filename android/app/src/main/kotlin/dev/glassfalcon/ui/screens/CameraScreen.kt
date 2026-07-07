@@ -158,6 +158,22 @@ fun CameraScreen(vm: FlightViewModel) {
                 options = listOf("50 Hz", "60 Hz"),
                 enabled = app.connected,
             ) { vm.setAntiFlicker(it) }
+
+            // Exposure program (P/S/A/M). Indices follow DJI's standard exposure-mode enum
+            // ordering; the camera echoes the accepted value in its state push.
+            CamDropdown(
+                label = "Exposure",
+                options = listOf("Auto (P)", "Shutter", "Aperture", "Manual"),
+                enabled = app.connected,
+            ) { vm.setCameraExpMode(it) }
+
+            // Color / look profile. Normal for a graded-in-camera look, D-Cinelike/D-Log for a
+            // flat profile to grade later. Indices follow the DJI color-style enum order.
+            CamDropdown(
+                label = "Color profile",
+                options = listOf("Normal", "D-Cinelike", "D-Log"),
+                enabled = app.connected,
+            ) { vm.setCameraColor(it) }
         }
     }
 }

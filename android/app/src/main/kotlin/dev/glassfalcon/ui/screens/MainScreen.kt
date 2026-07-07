@@ -345,16 +345,17 @@ fun MainScreen(vm: FlightViewModel, onOpenSettings: () -> Unit) {
             )
         }
 
-        // Always visible regardless of DisplayMode, otherwise switching to Minimal/Camera/Map
-        // would strand the pilot with no way back to Full without leaving the flight screen.
-        // Bottom-start (above the takeoff button, below the speed tape's own labels) rather than
-        // a top corner, the top bar's own status pills (PREVIEW/GPS/etc) already occupy every
-        // top corner, and being drawn later in the same parent Box, they'd win every tap in a
-        // shared region regardless of this control's own bounds.
-        CastControl(
-            displayMode = displayMode, onModeChange = { displayMode = it },
-            modifier = Modifier.align(Alignment.BottomStart).padding(start = 6.dp, bottom = 112.dp),
-        )
+        // The display-mode / cast picker now lives inside the nav menu (see NavCluster) instead
+        // of a floating button. The only thing that must stay on-screen in a cast mode is the way
+        // BACK: the nav menu is Full-only, so without a persistent exit, Minimal/Camera/Map would
+        // be dead ends. This single chip is that exit — always on top (zIndex) so no frame/video
+        // can bury it, shown only while not already in Full.
+        if (displayMode != DisplayMode.FULL) {
+            ExitCastChip(
+                onExit = { displayMode = DisplayMode.FULL },
+                modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 16.dp).zIndex(50f),
+            )
+        }
 
         // ── Vision/obstacle radar (cmd 0x6a), drawn as ephemeral glows hugging the four
         // screen edges rather than a boxed widget, so it reads ambiently instead of competing
@@ -557,13 +558,13 @@ fun MainScreen(vm: FlightViewModel, onOpenSettings: () -> Unit) {
             ) {
                 Box(
                     Modifier.size(width = 34.dp, height = 28.dp)
-                        .glass(shape = RoundedCornerShape(6.dp), baseAlpha = if (!manualFocus) 0.4f else 0.18f)
+                        .glass(shape = RoundedCornerShape(6.dp), baseAlpha = if (!manualFocus) 0.4f else 0.18f, frosted = true)
                         .clickable { manualFocus = false; vm.setCameraFocus(2) },
                     contentAlignment = Alignment.Center,
                 ) { Text("AF", color = if (!manualFocus) DjiGreen else TextSec, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
                 Box(
                     Modifier.size(width = 34.dp, height = 28.dp)
-                        .glass(shape = RoundedCornerShape(6.dp), baseAlpha = if (manualFocus) 0.4f else 0.18f)
+                        .glass(shape = RoundedCornerShape(6.dp), baseAlpha = if (manualFocus) 0.4f else 0.18f, frosted = true)
                         .clickable { manualFocus = true; vm.setCameraFocus(0) },
                     contentAlignment = Alignment.Center,
                 ) { Text("MF", color = if (manualFocus) DjiGreen else TextSec, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
@@ -788,7 +789,7 @@ fun MainScreen(vm: FlightViewModel, onOpenSettings: () -> Unit) {
                     label = "LAND", color = DjiAmber, enabled = droneLinked,
                     slideUp = false, length = 230.dp, hazeState = hazeState,
                 ) { vm.autoLand() }
-                inAir -> SmallBtn("▼ LAND", DjiAmber, droneLinked) { landExpanded = true }
+                inAir -> SmallBtn("LAND", DjiAmber, droneLinked, iconRes = R.drawable.ic_hud_land) { landExpanded = true }
                 else -> TakeoffPill(enabled = droneLinked, hazeState = hazeState) { showTakeoffModal = true }
             }
 
@@ -811,6 +812,8 @@ fun MainScreen(vm: FlightViewModel, onOpenSettings: () -> Unit) {
             onRth = { vm.sendRth() },
             rthEnabled = droneLinked,
             onOpenSettings = onOpenSettings,
+            displayMode = displayMode,
+            onDisplayMode = { displayMode = it },
             hazeState = hazeState,
             modifier = Modifier.align(Alignment.BottomEnd).padding(end = 80.dp + navSlide, bottom = 34.dp),
         )
@@ -890,6 +893,7 @@ fun MainScreen(vm: FlightViewModel, onOpenSettings: () -> Unit) {
             tapFlyArmPending = tapFlyArmPending,
             onCancelActiveTrack = { vm.stopActiveTrack() },
             onCancelTapFly = { tapFlyArmPending = false; vm.stopTapFly() },
+            onToggleActiveTrackFollow = { vm.setActiveTrackFollow(!activeTrackStatus.following) },
             warningsBannerHeightPx = warningsBannerHeightPx,
             hazeState = hazeState,
             modifier = Modifier.fillMaxSize(),
@@ -936,22 +940,92 @@ private fun NavCluster(
     mapShown: Boolean, onToggleMap: () -> Unit,
     onRth: () -> Unit, rthEnabled: Boolean,
     onOpenSettings: () -> Unit,
+    displayMode: DisplayMode, onDisplayMode: (DisplayMode) -> Unit,
     hazeState: HazeState?, modifier: Modifier,
 ) {
     Column(
-        modifier.glass(shape = RoundedCornerShape(10.dp), baseAlpha = 0.22f, haze = hazeState),
+        modifier.glass(shape = RoundedCornerShape(10.dp), baseAlpha = 0.22f, haze = hazeState, frosted = true),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         NavClusterIcon(R.drawable.ic_hud_map, if (mapShown) DjiGreen else TextSec, true, onToggleMap)
         NavClusterIcon(R.drawable.ic_hud_rth, DjiAmber, rthEnabled, onRth)
+        // Display / cast picker, folded into the nav menu instead of a floating button. Its own
+        // DropdownMenu handles both tap-outside-to-dismiss and staying on-screen automatically.
+        DisplayModeMenuButton(displayMode = displayMode, onDisplayMode = onDisplayMode)
         NavClusterIcon(R.drawable.ic_hud_menu, Gold, true, onOpenSettings)
+    }
+}
+
+/** The 📺 nav-menu entry that opens the SCREEN-SHOWS / cast picker. */
+@Composable
+private fun DisplayModeMenuButton(displayMode: DisplayMode, onDisplayMode: (DisplayMode) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    Box {
+        Box(
+            Modifier.size(40.dp).clickable { expanded = true },
+            contentAlignment = Alignment.Center,
+        ) { Text("📺", fontSize = 18.sp) }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.glass(baseAlpha = 0.4f, frosted = true),
+        ) {
+            Text(
+                "SCREEN SHOWS", color = TextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            )
+            listOf(
+                DisplayMode.FULL to "Full HUD",
+                DisplayMode.MINIMAL to "Minimal HUD",
+                DisplayMode.CAMERA_ONLY to "Camera only",
+                DisplayMode.MAP_ONLY to "Map only",
+            ).forEach { (mode, label) ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            (if (mode == displayMode) "● " else "○ ") + label,
+                            color = if (mode == displayMode) DjiGreen else TextPri, fontSize = 13.sp,
+                        )
+                    },
+                    onClick = { onDisplayMode(mode); expanded = false },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text("📡  Cast to TV…", color = Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold) },
+                onClick = {
+                    expanded = false
+                    try {
+                        context.startActivity(Intent(Settings.ACTION_CAST_SETTINGS))
+                    } catch (_: Exception) {
+                        // Some OEM builds lack this exact screen; the Quick Settings Cast tile is the fallback.
+                    }
+                },
+            )
+        }
+    }
+}
+
+/** The one always-on-top way back to the full HUD from any cast/minimal display mode. */
+@Composable
+private fun ExitCastChip(onExit: () -> Unit, modifier: Modifier) {
+    Box(
+        modifier
+            .glass(shape = RoundedCornerShape(20.dp), tint = DjiGreen, baseAlpha = 0.3f, frosted = true)
+            .clickable(onClick = onExit),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "⤢  Exit to Full HUD", color = DjiGreen, fontSize = 13.sp, fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        )
     }
 }
 
 @Composable
 private fun NavClusterIcon(iconRes: Int, color: Color, enabled: Boolean, onClick: () -> Unit) {
     Box(
-        Modifier.size(38.dp)
+        Modifier.size(40.dp)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -1002,7 +1076,7 @@ private fun VisionModesCluster(
     modifier: Modifier,
 ) {
     Column(
-        modifier.glass(shape = RoundedCornerShape(10.dp), baseAlpha = 0.22f, haze = hazeState),
+        modifier.glass(shape = RoundedCornerShape(10.dp), baseAlpha = 0.22f, haze = hazeState, frosted = true),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val atColor = when (activeTrackMode) {
@@ -1023,7 +1097,7 @@ private fun VisionModesCluster(
 @Composable
 private fun VisionModeIcon(iconRes: Int, color: Color, enabled: Boolean, onClick: () -> Unit) {
     Box(
-        Modifier.size(38.dp).clickable(enabled = enabled, onClick = onClick),
+        Modifier.size(40.dp).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         HudGlowIcon(iconRes, if (enabled) color else color.copy(alpha = 0.35f))
@@ -1042,6 +1116,7 @@ private fun VisionModeOverlay(
     tapFlyArmPending: Boolean,
     onCancelActiveTrack: () -> Unit,
     onCancelTapFly: () -> Unit,
+    onToggleActiveTrackFollow: () -> Unit,
     warningsBannerHeightPx: Int,
     hazeState: HazeState?,
     modifier: Modifier,
@@ -1062,7 +1137,8 @@ private fun VisionModeOverlay(
 
         val banner: Pair<String, Color>? = when {
             activeTrackStatus.mode == ActiveTrackMode.LOCKED ->
-                "● TRACKING, holding position, panning to subject" to DjiGreen
+                (if (activeTrackStatus.following) "● FOLLOWING, holding distance, keeping subject centered"
+                 else "● TRACKING, holding position, panning to subject") to DjiGreen
             activeTrackStatus.mode == ActiveTrackMode.SEARCHING ->
                 activeTrackStatus.label to DjiAmber
             tapFlyArmPending -> "TapFly armed, tap the video to set a bearing" to DjiAmber
@@ -1085,11 +1161,24 @@ private fun VisionModeOverlay(
             val topPad = 92.dp + with(density) { warningsBannerHeightPx.toDp() }
             Row(
                 Modifier.align(Alignment.TopCenter).padding(top = topPad)
-                    .glass(shape = RoundedCornerShape(10.dp), tint = color, baseAlpha = 0.24f, haze = hazeState),
+                    .glass(shape = RoundedCornerShape(10.dp), tint = color, baseAlpha = 0.24f, haze = hazeState, frosted = true),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(label, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 14.dp, end = 6.dp, top = 8.dp, bottom = 8.dp))
+                // WATCH/FOLLOW toggle, only while ActiveTrack is armed (either mode owns the
+                // banner). Lets the pilot pre-arm follow while searching and flip it live while
+                // locked, see ActiveTrackController.setFollow.
+                if (activeTrackStatus.mode != ActiveTrackMode.OFF) {
+                    val follow = activeTrackStatus.following
+                    val followColor = if (follow) DjiGreen else DjiCyan
+                    TextButton(onClick = onToggleActiveTrackFollow) {
+                        HudIcon(R.drawable.ic_hud_follow, followColor, 15.dp)
+                        Spacer(Modifier.width(4.dp))
+                        Text(if (follow) "FOLLOW" else "WATCH",
+                            color = followColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    }
+                }
                 if (onCancel != null) {
                     TextButton(onClick = onCancel) {
                         Text("STOP", color = DjiRed, fontWeight = FontWeight.Bold, fontSize = 12.sp)
@@ -1104,13 +1193,17 @@ private fun VisionModeOverlay(
  *  Opens [TakeoffConfirmModal] rather than arming directly. */
 @Composable
 private fun TakeoffPill(enabled: Boolean, hazeState: HazeState? = null, onClick: () -> Unit) {
-    Box(Modifier.glass(shape = RoundedCornerShape(20.dp), tint = DjiGreen, baseAlpha = 0.18f, haze = hazeState)) {
+    Box(Modifier.glass(shape = RoundedCornerShape(20.dp), tint = DjiGreen, baseAlpha = 0.18f, haze = hazeState, frosted = true)) {
         TextButton(
             onClick = onClick,
             enabled = enabled,
             colors = ButtonDefaults.textButtonColors(contentColor = DjiGreen),
             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-        ) { Text("▲  TAKE OFF", fontSize = 13.sp, fontWeight = FontWeight.Bold) }
+        ) {
+            HudIcon(R.drawable.ic_hud_takeoff, if (enabled) DjiGreen else DjiGreen.copy(alpha = 0.4f), 16.dp)
+            Spacer(Modifier.width(6.dp))
+            Text("TAKE OFF", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        }
     }
 }
 
@@ -1146,7 +1239,7 @@ private fun CoPilotPttButton(vm: FlightViewModel, hazeState: HazeState? = null) 
                     .align(Alignment.BottomCenter)
                     .offset { IntOffset(0, -56.dp.roundToPx()) }
                     .widthIn(max = 220.dp)
-                    .glass(shape = RoundedCornerShape(10.dp), tint = DjiGreen, baseAlpha = 0.28f, haze = hazeState)
+                    .glass(shape = RoundedCornerShape(10.dp), tint = DjiGreen, baseAlpha = 0.28f, haze = hazeState, frosted = true)
                     .padding(horizontal = 10.dp, vertical = 6.dp),
             ) {
                 Text(message, color = TextPri, fontSize = 11.sp, lineHeight = 14.sp)
@@ -1156,7 +1249,7 @@ private fun CoPilotPttButton(vm: FlightViewModel, hazeState: HazeState? = null) 
         Box(
             Modifier
                 .size(44.dp)
-                .glass(shape = CircleShape, tint = if (listening) DjiRed else DjiGreen, baseAlpha = 0.22f, haze = hazeState)
+                .glass(shape = CircleShape, tint = if (listening) DjiRed else DjiGreen, baseAlpha = 0.22f, haze = hazeState, frosted = true)
                 .pointerInput(micGranted) {
                     detectTapGestures(onPress = {
                         if (!micGranted) {
@@ -1169,7 +1262,10 @@ private fun CoPilotPttButton(vm: FlightViewModel, hazeState: HazeState? = null) 
                     })
                 },
             contentAlignment = Alignment.Center,
-        ) { Text(if (listening) "●" else "🎙", fontSize = if (listening) 20.sp else 16.sp, color = if (listening) Color.White else DjiGreen) }
+        ) {
+            if (listening) Text("●", fontSize = 20.sp, color = Color.White)
+            else HudIcon(R.drawable.ic_hud_mic, DjiGreen, 20.dp)
+        }
     }
 }
 
@@ -1188,13 +1284,17 @@ private fun TakeoffConfirmModal(
         Modifier
             .fillMaxSize()
             .background(Color.Black.copy(alpha = 0.82f))
-            .pointerInput(Unit) { detectTapGestures { /* swallow taps on the scrim */ } },
+            // Tap the scrim outside the panel to cancel (same as the Cancel button).
+            .pointerInput(Unit) { detectTapGestures { onCancel() } },
         contentAlignment = Alignment.Center,
     ) {
         BoxWithConstraints(
             modifier = Modifier
                 .padding(28.dp)
-                .glass(shape = RoundedCornerShape(16.dp), tint = DjiGreen, baseAlpha = 0.25f, haze = hazeState)
+                .glass(shape = RoundedCornerShape(16.dp), tint = DjiGreen, baseAlpha = 0.25f, haze = hazeState, frosted = true)
+                // Swallow taps that land on the panel itself so only the scrim dismisses; the
+                // lever/buttons are deeper children and still get their taps first.
+                .pointerInput(Unit) { detectTapGestures { } }
                 .padding(24.dp),
         ) {
             // Fill nearly the whole modal height with the lever's travel, a long, deliberate
@@ -1344,8 +1444,16 @@ private fun TopBar(
             else        -> "RC ONLY" to DjiAmber
         }
         Surface(color = linkColor.copy(alpha = 0.25f), shape = MaterialTheme.shapes.small, modifier = tapTray) {
-            Text(" ● $linkLabel ", color = linkColor, fontSize = 10.sp, fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+            ) {
+                // Link-state glyph (no decoded numeric RC/video signal strength exists yet, so this
+                // is a state light: green RC+drone, amber RC-only, red no-link, cyan preview).
+                HudIcon(R.drawable.ic_hud_signal, linkColor, 12.dp)
+                Spacer(Modifier.width(3.dp))
+                Text(linkLabel, color = linkColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+            }
         }
         Spacer(Modifier.width(6.dp))
         Surface(
@@ -1364,7 +1472,10 @@ private fun TopBar(
                     gpsSats < 10 -> DjiAmber
                     else -> DjiGreen
                 }
-                HudIcon(R.drawable.ic_hud_mode_gps, satColor, 12.dp)
+                // Dedicated satellite glyph here (not the mode_gps glyph, which the flight-mode
+                // pill downstream still uses) so the sat-count badge and the GPS flight-mode pill
+                // read as two distinct things at a glance.
+                HudIcon(R.drawable.ic_hud_satellite, satColor, 12.dp)
                 Spacer(Modifier.width(3.dp))
                 Text(
                     if (hasGpsFix) "GPS $gpsSats ▾" else "no GPS ($gpsSats) ▾",
@@ -1606,6 +1717,10 @@ private fun TopBar(
                             .background(Color(0x59000000), RoundedCornerShape(50))
                             .padding(horizontal = 6.dp, vertical = 1.dp),
                     ) {
+                        // Leading wind glyph labels the pill; the arrow beside it still carries the
+                        // real direction (from-bearing + 180, i.e. the way the wind blows toward).
+                        HudIcon(R.drawable.ic_hud_wind, avgColor, 12.dp)
+                        Spacer(Modifier.width(4.dp))
                         Text("↑", color = avgColor, fontSize = 13.sp, fontWeight = FontWeight.Bold,
                             modifier = Modifier.rotate(windFromDeg + 180f), style = windStyle)
                         Spacer(Modifier.width(3.dp))
@@ -1752,7 +1867,7 @@ private fun RightCameraPanel(modifier: Modifier, vm: FlightViewModel, hazeState:
             exit = shrinkHorizontally(shrinkTowards = Alignment.End) + fadeOut(tween(160)),
         ) {
             Column(
-                modifier = Modifier.width(280.dp).glass(shape = RoundedCornerShape(16.dp), haze = hazeState, baseAlpha = 0.16f).padding(14.dp),
+                modifier = Modifier.width(280.dp).glass(shape = RoundedCornerShape(16.dp), haze = hazeState, baseAlpha = 0.16f, frosted = true).padding(14.dp),
             ) {
                 Text("CAMERA", color = TextSec, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(6.dp))
@@ -1825,6 +1940,7 @@ private fun RightCameraPanel(modifier: Modifier, vm: FlightViewModel, hazeState:
                         tint = ballTint,
                         baseAlpha = 0.65f,
                         haze = hazeState,
+                        frosted = true,
                     )
                     .border(2.dp, ballTint.copy(alpha = 0.85f), CircleShape)
                     .clickable(enabled = app.connected) {
@@ -1839,7 +1955,7 @@ private fun RightCameraPanel(modifier: Modifier, vm: FlightViewModel, hazeState:
                     // does" instead of being a blank glass disc, camera for photo mode, video
                     // camera for video mode, in a soft glass chip rather than a flat glyph.
                     Box(
-                        Modifier.size(30.dp).glass(shape = CircleShape, baseAlpha = 0.35f, haze = hazeState),
+                        Modifier.size(30.dp).glass(shape = CircleShape, baseAlpha = 0.35f, haze = hazeState, frosted = true),
                         contentAlignment = Alignment.Center,
                     ) {
                         Image(
@@ -1853,7 +1969,7 @@ private fun RightCameraPanel(modifier: Modifier, vm: FlightViewModel, hazeState:
 
             // Small photo/video toggle pill right under the button.
             Row(
-                Modifier.width(66.dp).glass(shape = RoundedCornerShape(20.dp), baseAlpha = 0.16f, haze = hazeState),
+                Modifier.width(66.dp).glass(shape = RoundedCornerShape(20.dp), baseAlpha = 0.16f, haze = hazeState, frosted = true),
             ) {
                 Box(
                     modifier = Modifier.weight(1f).background(if (!isVideo) DjiGreen else Color.Transparent, RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
@@ -1874,7 +1990,7 @@ private fun RightCameraPanel(modifier: Modifier, vm: FlightViewModel, hazeState:
             // that flips direction reads as "expand/collapse this tray" at a glance; a gear reads
             // as "go somewhere else to configure something," which is what pilots kept expecting.
             Box(
-                Modifier.size(22.dp).glass(shape = CircleShape, baseAlpha = 0.16f, haze = hazeState)
+                Modifier.size(22.dp).glass(shape = CircleShape, baseAlpha = 0.16f, haze = hazeState, frosted = true)
                     .clickable { settingsOpen = !settingsOpen },
                 contentAlignment = Alignment.Center,
             ) { Text(if (settingsOpen) "▸" else "◂", color = TextSec, fontSize = 13.sp, fontWeight = FontWeight.Bold) }
@@ -1895,11 +2011,14 @@ private fun RightCameraPanel(modifier: Modifier, vm: FlightViewModel, hazeState:
 private fun FormatSdConfirmDialog(onConfirm: () -> Unit, onCancel: () -> Unit) {
     Box(
         Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.82f))
-            .pointerInput(Unit) { detectTapGestures { /* swallow taps on the scrim */ } },
+            // Tap the scrim outside the dialog to cancel (same as the Cancel button).
+            .pointerInput(Unit) { detectTapGestures { onCancel() } },
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            Modifier.padding(28.dp).glass(shape = RoundedCornerShape(16.dp), tint = DjiRed, baseAlpha = 0.25f)
+            Modifier.padding(28.dp).glass(shape = RoundedCornerShape(16.dp), tint = DjiRed, baseAlpha = 0.25f, frosted = true)
+                // Swallow taps on the dialog body so only the scrim dismisses it.
+                .pointerInput(Unit) { detectTapGestures { } }
                 .padding(24.dp).widthIn(max = 280.dp),
         ) {
             Text("⚠ FORMAT SD CARD", color = DjiRed, fontSize = 16.sp, fontWeight = FontWeight.Bold)
@@ -1977,13 +2096,19 @@ private fun BottomStrip(
 }
 
 @Composable
-private fun SmallBtn(label: String, color: Color, enabled: Boolean, onClick: () -> Unit) {
+private fun SmallBtn(label: String, color: Color, enabled: Boolean, iconRes: Int? = null, onClick: () -> Unit) {
     TextButton(
         onClick = onClick,
         enabled = enabled,
         colors = ButtonDefaults.textButtonColors(contentColor = color),
         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),
-    ) { Text(label, fontSize = 10.sp) }
+    ) {
+        if (iconRes != null) {
+            HudIcon(iconRes, if (enabled) color else color.copy(alpha = 0.4f), 14.dp)
+            Spacer(Modifier.width(4.dp))
+        }
+        Text(label, fontSize = 10.sp)
+    }
 }
 
 /**
@@ -2045,7 +2170,7 @@ private fun GuardedSlideSwitch(
         // finger start anywhere in the pill still grabs it, not just a tiny hit-target.
         Box(
             Modifier.fillMaxSize()
-                .glass(shape = RoundedCornerShape(10.dp), tint = baseColor, baseAlpha = 0.25f, haze = hazeState)
+                .glass(shape = RoundedCornerShape(10.dp), tint = baseColor, baseAlpha = 0.25f, haze = hazeState, frosted = true)
                 .onSizeChanged { trackPx = (it.height - thumbPx).coerceAtLeast(1f) }
                 .pointerInput(enabled, armed, slideUp) {
                     if (!enabled || !armed) return@pointerInput
@@ -2242,7 +2367,7 @@ private fun AircraftThrottleLever(label: String, enabled: Boolean, length: Dp, o
                     },
                 contentAlignment = Alignment.Center,
             ) {
-                Box(Modifier.glass(shape = RoundedCornerShape(6.dp), baseAlpha = 0.3f).padding(horizontal = 6.dp, vertical = 4.dp)) {
+                Box(Modifier.glass(shape = RoundedCornerShape(6.dp), baseAlpha = 0.3f, frosted = true).padding(horizontal = 6.dp, vertical = 4.dp)) {
                     Text("🛡 $label\nFLIP TO ARM", color = Color.White,
                         fontSize = 10.sp, fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center, lineHeight = 12.sp)
@@ -2645,64 +2770,6 @@ private fun AltitudeTape(
         alignEdge = Alignment.CenterEnd, hazeState = hazeState, cutoutPx = cutoutPx, gaugeMax = maxHeightM,
         modifier = modifier,
     )
-}
-
-/**
- * Small always-visible control (regardless of [DisplayMode]) for what this phone's own screen
- * shows, plus a shortcut into Android's own Cast/Smart View picker. GlassFalcon has no streaming
- * pipeline of its own here, Android's built-in screen-cast already mirrors whatever's on the
- * phone's display to a paired TV/receiver over the OS's own transport; the only thing worth
- * building is (a) letting the pilot choose WHAT that mirrored content is (full HUD vs. a clean
- * view for spectators) without leaving the flight screen, and (b) a one-tap shortcut into the
- * system Cast picker instead of digging through Settings/Quick Settings mid-flight.
- * `Settings.ACTION_CAST_SETTINGS` is a public, documented intent action (API 21+) that opens the
- * OS's own Cast device picker directly.
- */
-@Composable
-private fun CastControl(displayMode: DisplayMode, onModeChange: (DisplayMode) -> Unit, modifier: Modifier) {
-    var expanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-    Box(modifier) {
-        Box(
-            Modifier.size(28.dp).glass(shape = RoundedCornerShape(6.dp), baseAlpha = 0.3f)
-                .clickable { expanded = !expanded },
-            contentAlignment = Alignment.Center,
-        ) { Text("📺", fontSize = 13.sp) }
-        if (expanded) {
-            Column(
-                Modifier.padding(top = 32.dp).width(180.dp)
-                    .glass(shape = RoundedCornerShape(8.dp), baseAlpha = 0.4f).padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text("SCREEN SHOWS", color = TextSec, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                listOf(
-                    DisplayMode.FULL to "Full HUD",
-                    DisplayMode.MINIMAL to "Minimal HUD",
-                    DisplayMode.CAMERA_ONLY to "Camera only",
-                    DisplayMode.MAP_ONLY to "Map only",
-                ).forEach { (mode, label) ->
-                    Text(
-                        (if (mode == displayMode) "● " else "○ ") + label,
-                        color = if (mode == displayMode) DjiGreen else TextPri, fontSize = 12.sp,
-                        modifier = Modifier.fillMaxWidth().clickable { onModeChange(mode); expanded = false },
-                    )
-                }
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    "📡  Cast to TV…", color = Gold, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth().clickable {
-                        expanded = false
-                        try {
-                            context.startActivity(Intent(Settings.ACTION_CAST_SETTINGS))
-                        } catch (_: Exception) {
-                            // Some OEM builds don't ship this exact settings screen, the Quick
-                            // Settings Cast tile the pilot already knows is the fallback.
-                        }
-                    },
-                )
-            }
-        }
-    }
 }
 
 /**
@@ -3568,7 +3635,7 @@ private fun StatusTray(
         modifier
             .width(210.dp)
             .heightIn(max = 460.dp)
-            .glass(shape = RoundedCornerShape(8.dp), baseAlpha = 0.35f, haze = hazeState)
+            .glass(shape = RoundedCornerShape(8.dp), baseAlpha = 0.35f, haze = hazeState, frosted = true)
             .background(Color(0xCC0A0E14), RoundedCornerShape(8.dp))
             .verticalScroll(rememberScrollState())
             .padding(10.dp),

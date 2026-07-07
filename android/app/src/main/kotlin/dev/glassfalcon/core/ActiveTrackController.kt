@@ -35,13 +35,22 @@ data class ActiveTrackStatus(
     // Last known bbox of the locked subject, fractional (0..1) within the analyzed video frame.
     val bboxFrac: RectF? = null,
     val label: String = "",
+    // Follow-at-a-distance armed (drone drives forward/back to hold the subject's apparent size),
+    // vs the default "watch me" that only yaws in place. Reflects [setFollow]'s live state.
+    val following: Boolean = false,
 )
 
 /**
- * "Watch me" ActiveTrack, NOT DJI's autonomous follow-at-a-distance mode. Deliberately scoped
- * down to the safe/simple version: the drone holds its current position (neutral roll/pitch/
- * throttle, GPS position hold does the rest) and only yaws to keep the tapped subject's
- * horizontal bbox center at frame-center. No forward-following, no orbiting.
+ * ActiveTrack with two behaviours the caller picks between via [setFollow]:
+ *  - "Watch me" (default): the drone holds its current position (neutral roll/pitch/throttle,
+ *    GPS position hold does the rest) and only yaws to keep the tapped subject's horizontal bbox
+ *    center at frame-center. No forward-following, no orbiting.
+ *  - Follow: on top of the same yaw-centering, the drone also drives forward/back to hold the
+ *    subject's apparent SIZE constant. Monocular distance proxy: bigger bbox → subject closer →
+ *    pitch back; smaller bbox → subject farther → pitch forward. This is a genuine
+ *    follow-at-a-distance, but a deliberately conservative one, capped forward stick, a size
+ *    deadband so it doesn't hunt, and the same forward-obstacle gate + telemetry-staleness bail
+ *    TapFlyController already uses (see [attachObstacleState]).
  *
  * Subject detection is Google ML Kit Object Detection & Tracking
  * (`com.google.mlkit:object-detection:17.0.2`, verified against the real published artifact
@@ -70,6 +79,7 @@ class ActiveTrackController(
     val status: StateFlow<ActiveTrackStatus> = _status
 
     private var droneState: DroneState = DroneState()
+    private var obstacleState: ObstacleState = ObstacleState()
     @Volatile private var lastStateMs = 0L
     private val STALE_MS = 1500L
 
@@ -77,6 +87,7 @@ class ActiveTrackController(
         droneState = state
         lastStateMs = System.currentTimeMillis()
     }
+    fun attachObstacleState(state: ObstacleState) { obstacleState = state }
 
     private fun telemetryFresh() =
         lastStateMs != 0L && System.currentTimeMillis() - lastStateMs < STALE_MS
@@ -92,12 +103,30 @@ class ActiveTrackController(
                                       // aspect (getBitmap always maps view content into whatever
                                       // size bitmap you hand it, so this need not match exactly)
 
+    // Follow-mode tuning, same "reasonable starting point, unverified against real flight"
+    // caveat as the yaw gain above. FOLLOW_KP acts on the RELATIVE size error (how far the
+    // subject's apparent size has drifted from its locked reference, as a fraction of that
+    // reference), so it's unit-independent. PITCH_CAP / OBSTACLE_STOP_CM are carried straight
+    // over from TapFlyController so both vision modes share one forward-speed and one
+    // obstacle-stop convention.
+    private val FOLLOW_KP = 1.2f
+    private val PITCH_CAP = 0.35f    // capped forward/back stick fraction (matches TapFly)
+    private val SIZE_DEADBAND = 0.10f // ignore <10% size drift so it doesn't hunt in place
+    private val OBSTACLE_STOP_CM = 50 // clamp forward pitch to 0 when something's this close ahead
+
     private var detectJob: Job? = null
     private var stickJob: Job? = null
     private var textureViewRef: TextureView? = null
     private var lockedTrackingId: Int? = null
     private var missCount = 0
     @Volatile private var yawOut = 0f
+    @Volatile private var pitchOut = 0f
+    // Follow is a sticky mode preference toggled by [setFollow]; it persists across arm cycles.
+    @Volatile private var following = false
+    // Linear apparent-size proxy sqrt(bboxArea/frameArea) of the locked subject: [referenceSize]
+    // is the size captured when follow engaged (the distance to hold), [currentSize] the latest.
+    @Volatile private var referenceSize = 0f
+    @Volatile private var currentSize = 0f
 
     private var lastDetections: List<DetectedObject> = emptyList()
     private var lastFrameW = 0
@@ -120,11 +149,25 @@ class ActiveTrackController(
         textureViewRef = view
         lockedTrackingId = null
         missCount = 0
+        referenceSize = 0f; currentSize = 0f; pitchOut = 0f
         _status.value = ActiveTrackStatus(
             mode = ActiveTrackMode.SEARCHING,
             label = "ActiveTrack armed, tap a subject on the video",
+            following = following,
         )
         detectJob = scope.launch { detectLoop() }
+    }
+
+    /** Toggle follow-at-a-distance on/off. Sticky across arm cycles. Turning it on mid-track
+     *  captures the subject's current apparent size as the distance to hold from here on; turning
+     *  it off drops back to pure yaw-centering and zeroes any forward stick. */
+    fun setFollow(on: Boolean) {
+        following = on
+        if (!on) { pitchOut = 0f }
+        else if (currentSize > 0f) referenceSize = currentSize
+        if (_status.value.mode != ActiveTrackMode.OFF) {
+            _status.value = _status.value.copy(following = on)
+        }
     }
 
     /** Tap-to-select: locks onto whichever detected object (from the most recently analyzed
@@ -152,10 +195,15 @@ class ActiveTrackController(
         }
         lockedTrackingId = nearest.trackingId
         missCount = 0
+        currentSize = sizeProxy(nearest.boundingBox, lastFrameW, lastFrameH)
+        referenceSize = currentSize   // hold whatever distance the subject is at when locked
+        pitchOut = 0f
         _status.value = ActiveTrackStatus(
             mode = ActiveTrackMode.LOCKED,
             bboxFrac = rectToFrac(nearest.boundingBox, lastFrameW, lastFrameH),
-            label = "TRACKING, holding position, panning to keep subject centered",
+            label = if (following) "FOLLOWING, holding distance, keeping subject centered"
+                    else "TRACKING, holding position, panning to keep subject centered",
+            following = following,
         )
         stickJob = scope.launch { stickLoop() }
     }
@@ -168,9 +216,11 @@ class ActiveTrackController(
         if (cancelStick) { stickJob?.cancel(); stickJob = null }
         textureViewRef = null
         lockedTrackingId = null
-        yawOut = 0f
+        yawOut = 0f; pitchOut = 0f
+        currentSize = 0f; referenceSize = 0f
         duml.send(FlyC.joystick(0f, 0f, 0f, 0f))
-        _status.value = ActiveTrackStatus(label = label)
+        // Preserve the sticky follow preference so the next arm keeps the pilot's choice.
+        _status.value = ActiveTrackStatus(label = label, following = following)
     }
 
     private suspend fun detectLoop() {
@@ -197,6 +247,8 @@ class ActiveTrackController(
                         val centerFrac = match.boundingBox.exactCenterX() / lastFrameW
                         val err = (centerFrac - 0.5f) * 2f   // + = subject right of center
                         yawOut = (err * YAW_KP).coerceIn(-1f, 1f)
+                        currentSize = sizeProxy(match.boundingBox, lastFrameW, lastFrameH)
+                        pitchOut = followPitch()
                         _status.value = _status.value.copy(bboxFrac = rectToFrac(match.boundingBox, lastFrameW, lastFrameH))
                     } else {
                         missCount++
@@ -228,9 +280,36 @@ class ActiveTrackController(
                 )
                 return
             }
-            duml.send(FlyC.joystick(0f, 0f, 0f, yawOut))
+            // Follow drives forward/back; watch-me leaves pitch at 0. Forward motion is gated on
+            // front-obstacle clearance the same way TapFly stops, but here we only CLAMP forward
+            // (a positive/forward pitch) to zero rather than cancel the whole track: backing off
+            // and yaw-centering stay live so the subject isn't lost just because it walked near a
+            // wall. frontClosest is the same live reading the HUD's obstacle glow shows.
+            var pitch = if (following) pitchOut else 0f
+            val front = obstacleState.frontClosest
+            if (pitch > 0f && front != null && front < OBSTACLE_STOP_CM) pitch = 0f
+            duml.send(FlyC.joystick(0f, pitch, 0f, yawOut))
             delay(STICK_MS)
         }
+    }
+
+    /** Linear apparent-size proxy of a bbox: sqrt(area / frameArea), in [0,1]. Square-rooting the
+     *  area keeps it proportional to distance (a subject twice as far has ~half the linear size),
+     *  so the follow controller's error term stays roughly linear in real-world distance. */
+    private fun sizeProxy(r: Rect, w: Int, h: Int): Float {
+        if (w <= 0 || h <= 0) return 0f
+        val areaFrac = (r.width().toFloat() * r.height().toFloat()) / (w.toFloat() * h.toFloat())
+        return kotlin.math.sqrt(areaFrac.coerceIn(0f, 1f))
+    }
+
+    /** Forward/back stick to hold the subject at its locked apparent size. Positive = forward
+     *  (subject shrank/moved away). Zero unless following, and within a deadband so small size
+     *  jitter doesn't twitch the sticks. */
+    private fun followPitch(): Float {
+        if (!following || referenceSize <= 0f || currentSize <= 0f) return 0f
+        val relErr = (referenceSize - currentSize) / referenceSize   // + = subject farther now
+        if (kotlin.math.abs(relErr) < SIZE_DEADBAND) return 0f
+        return (relErr * FOLLOW_KP).coerceIn(-PITCH_CAP, PITCH_CAP)
     }
 
     private fun rectToFrac(r: Rect, w: Int, h: Int) = RectF(

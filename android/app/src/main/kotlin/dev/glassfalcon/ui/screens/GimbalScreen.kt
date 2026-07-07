@@ -16,8 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.glassfalcon.R
 import dev.glassfalcon.core.*
 import dev.glassfalcon.ui.*
 import kotlin.math.min
@@ -37,7 +39,11 @@ fun GimbalScreen(vm: FlightViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("GIMBAL ATTITUDE", color = TextSec, fontSize = 10.sp, letterSpacing = 1.sp)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                Icon(painterResource(R.drawable.ic_hud_gimbal), contentDescription = null,
+                    tint = Gold, modifier = Modifier.size(16.dp))
+                Text("GIMBAL ATTITUDE", color = TextSec, fontSize = 10.sp, letterSpacing = 1.sp)
+            }
             ArtificialHorizon(
                 pitch = gimbal.pitch,
                 roll  = gimbal.roll,

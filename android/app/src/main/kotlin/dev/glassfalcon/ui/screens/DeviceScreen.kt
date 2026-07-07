@@ -16,9 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import dev.glassfalcon.R
 import dev.glassfalcon.core.*
 import dev.glassfalcon.ui.*
 
@@ -362,6 +364,178 @@ fun DeviceScreen(vm: FlightViewModel) {
             }
         }
 
+        // ── Aircraft controls (LED / motors / failsafe / auth) ───────────
+        // These map straight to FC commands the SDK already builds but that had no on-screen
+        // control before: nav/landing LED (0x03/0xba), motor arm/disarm (0x03/0x0b), RC-lost
+        // failsafe action (0x03/0x3b), and a one-shot Mavic2 auth frame (0x11/0x43) for verifying
+        // the 30 m-gate handshake by hand.
+        Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("Aircraft Controls", color = TextSec, fontSize = 11.sp)
+
+                // Landing / navigation LED. ledMode: 0=Off, 1=On, 2=Flash (FlightViewModel).
+                val ledMode by vm.ledMode.collectAsState()
+                Text("Nav / landing LED", color = TextPri, fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("Off" to 0, "On" to 1, "Flash" to 2).forEach { (label, mode) ->
+                        SegButton(
+                            label = label,
+                            selected = ledMode == mode,
+                            accent = DjiGreen,
+                            enabled = app.connected,
+                            modifier = Modifier.weight(1f),
+                        ) { vm.setLed(mode) }
+                    }
+                }
+
+                // Motors. Arming spins the props with the aircraft on the ground — deliberately
+                // behind a confirm; disarm is immediate (it's the safe direction).
+                var confirmArm by remember { mutableStateOf(false) }
+                Text("Motors", color = TextPri, fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = { confirmArm = true },
+                        enabled = app.connected,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = DjiRed.copy(alpha = 0.2f)),
+                    ) {
+                        Icon(painterResource(R.drawable.ic_hud_propeller), contentDescription = null,
+                            tint = DjiRed, modifier = Modifier.size(16.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Arm motors", color = DjiRed, fontSize = 12.sp)
+                    }
+                    DevButton("■ Disarm", enabled = app.connected, modifier = Modifier.weight(1f)) {
+                        vm.motorDisarm()
+                    }
+                }
+                if (confirmArm) {
+                    AlertDialog(
+                        onDismissRequest = { confirmArm = false },
+                        title = { Text("Arm motors?") },
+                        text = {
+                            Text(
+                                "This spins the propellers with the aircraft on the ground. Keep " +
+                                "clear of the props and have a way to disarm. Only arm if you mean to.",
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { confirmArm = false; vm.motorArm() }) {
+                                Text("Arm", color = DjiRed)
+                            }
+                        },
+                        dismissButton = { TextButton(onClick = { confirmArm = false }) { Text("Cancel") } },
+                    )
+                }
+
+                // RC-lost failsafe action. No read-back frame is decoded yet, so this is set-only;
+                // the selection below reflects the last value written this session, not the FC's.
+                var failsafe by remember { mutableStateOf<Int?>(null) }
+                Text("If the controller signal is lost", color = TextPri, fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("Hover" to 0, "Land" to 1, "Go Home" to 2).forEach { (label, action) ->
+                        SegButton(
+                            label = label,
+                            selected = failsafe == action,
+                            accent = DjiAmber,
+                            enabled = app.connected,
+                            modifier = Modifier.weight(1f),
+                        ) { failsafe = action; vm.setFailsafe(action) }
+                    }
+                }
+
+                // One-shot Mavic2 auth frame (0x11/0x43). The sender normally runs automatically on
+                // connect; this fires a single frame by hand for verifying the 30 m-gate handshake.
+                DevButton("🔑 Send one auth frame (test)", enabled = app.connected, modifier = Modifier.fillMaxWidth()) {
+                    vm.testMavic2AuthFrame()
+                }
+            }
+        }
+
+        // ── FC parameters (index tuning, expert) ─────────────────────────
+        // The index-based FC param protocol (0xe0 table size, 0xf7 info, 0xf8 read, 0xf9 write)
+        // was fully plumbed in the VM (fcParamCount / fcParamInfoByIndex / fcParamsByIndex) but had
+        // no screen. This reads one param's FC-declared name/min/max/def + current value and writes
+        // a numeric value back, encoded per the FC's own type — the manual counterpart to the
+        // presets (Sport Boost etc.) above.
+        Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("FC Parameters (index tuning, expert)", color = TextSec, fontSize = 11.sp)
+                val count by vm.fcParamCount.collectAsState()
+                val infoMap by vm.fcParamInfoByIndex.collectAsState()
+                val valMap by vm.fcParamsByIndex.collectAsState()
+                var idxStr by remember { mutableStateOf("") }
+                val idx = idxStr.toIntOrNull()
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        "Table size: " + (if (count > 0) "$count" else "—"),
+                        color = if (count > 0) TextPri else TextSec, fontSize = 11.sp,
+                        modifier = Modifier.weight(1f),
+                    )
+                    DevButton("Probe table size", enabled = app.connected, modifier = Modifier.width(150.dp)) {
+                        vm.probeFcTableSize()
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = idxStr,
+                        onValueChange = { s -> idxStr = s.filter { it.isDigit() }.take(4) },
+                        label = { Text("Param index", fontSize = 10.sp) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                    )
+                    DevButton("Read", enabled = app.connected && idx != null, modifier = Modifier.width(90.dp)) {
+                        idx?.let { vm.readFcParam(it) }
+                    }
+                }
+
+                // FC-declared metadata + current value for the entered index, once read.
+                idx?.let { i ->
+                    val info = infoMap[i]
+                    val raw = valMap[i]
+                    if (info != null) {
+                        Text(info.name.ifBlank { "param[$i]" }, color = DjiGreen, fontSize = 12.sp)
+                        Text(
+                            "min %.3g · max %.3g · def %.3g".format(info.min, info.max, info.def),
+                            color = TextSec, fontSize = 10.sp,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                        )
+                    }
+                    Text(
+                        "raw: " + (raw?.joinToString(" ") { "%02x".format(it) } ?: "— (Read to fetch)"),
+                        color = if (raw != null) TextPri else TextSec, fontSize = 11.sp,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    )
+                }
+
+                var writeStr by remember { mutableStateOf("") }
+                val writeVal = writeStr.toDoubleOrNull()
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = writeStr,
+                        onValueChange = { writeStr = it },
+                        label = { Text("Value to write", fontSize = 10.sp) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                    )
+                    Button(
+                        onClick = { if (idx != null && writeVal != null) vm.writeFcParamNumeric(idx, writeVal) },
+                        enabled = app.connected && idx != null && writeVal != null && infoMap[idx] != null,
+                        modifier = Modifier.width(90.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = DjiRed.copy(alpha = 0.2f)),
+                    ) { Text("Write", color = DjiRed, fontSize = 12.sp) }
+                }
+                Text(
+                    "Read the index first so the value is encoded to the FC's own type. The FC clamps " +
+                    "to its declared min/max; re-Read to confirm what it stored.",
+                    color = TextSec, fontSize = 9.sp, lineHeight = 12.sp,
+                )
+            }
+        }
+
         // ── RC physical button research ──────────────────────────────────
         // cmd_set=0x06/cmd_id=0x4c ("RC Pro Custom Buttons Status Get/Push") and 0x51 ("RC
         // Push To Glass") are named in the community dissector as the RC's own button-state
@@ -458,6 +632,31 @@ private fun DevButton(
 ) {
     OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier) {
         Text(label, fontSize = 11.sp)
+    }
+}
+
+/** One segment of a small radio-style selector: filled with the accent when [selected], a plain
+ *  outline otherwise. Used for pick-one aircraft settings (LED mode, RC-lost action). */
+@Composable
+private fun SegButton(
+    label: String,
+    selected: Boolean,
+    accent: Color,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    if (selected) {
+        Button(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = modifier,
+            colors = ButtonDefaults.buttonColors(containerColor = accent.copy(alpha = 0.22f)),
+        ) { Text(label, color = accent, fontSize = 12.sp) }
+    } else {
+        OutlinedButton(onClick = onClick, enabled = enabled, modifier = modifier) {
+            Text(label, color = TextSec, fontSize = 12.sp)
+        }
     }
 }
 

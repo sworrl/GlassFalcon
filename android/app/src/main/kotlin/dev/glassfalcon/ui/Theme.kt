@@ -46,6 +46,19 @@ val Green   = Color(0xFF40C060)
 val Red     = Color(0xFFE04040)
 val Orange  = Color(0xFFFF8040)
 
+// Dark "frost" pane painted under control panels (see Modifier.glass(frosted=true)); a deep,
+// slightly-blue near-black that reads as tinted glass over any background, bright sky included.
+val FrostDark = Color(0xFF070A10)
+
+// Shared HUD/DJI accent palette. These exact ARGB values were previously copy-pasted as
+// file-private `DjiGreen`/`DjiRed`/`DjiAmber`/`DjiCyan` vals in MainScreen, DeviceScreen,
+// MapScreen, AiSettingsScreen and others; hoisted here so every screen and every newly-added
+// control renders the same accents instead of drifting.
+val DjiGreen = Color(0xFF00CC44)
+val DjiAmber = Color(0xFFFFAA00)
+val DjiRed   = Color(0xFFFF3333)
+val DjiCyan  = Color(0xFF33CCFF)
+
 private val ColorScheme = darkColorScheme(
     primary         = Gold,
     onPrimary       = Color.Black,

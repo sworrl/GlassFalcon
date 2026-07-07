@@ -199,6 +199,7 @@ private fun SettingsOverlay(vm: FlightViewModel, onClose: () -> Unit) {
         "Camera"      to Icons.Filled.Camera,
         "Gimbal"      to Icons.Filled.Adjust,
         "Telemetry"   to Icons.Filled.BarChart,
+        "Radar"       to Icons.Filled.Radar,
         "Mission"     to Icons.Filled.Map,
         "Offload"     to Icons.Filled.Download,
         "Gallery"     to Icons.Filled.PhotoLibrary,
@@ -290,16 +291,17 @@ private fun SettingsOverlay(vm: FlightViewModel, onClose: () -> Unit) {
                 0 -> CameraScreen(vm)
                 1 -> GimbalScreen(vm)
                 2 -> TelemetryScreen(vm)
-                3 -> MissionScreen(vm)
-                4 -> OffloadScreen(vm)
-                5 -> GalleryScreen(vm, onGoToOffload = { selectedTab = 4 })
-                6 -> DeviceScreen(vm)
-                7 -> DeviceInfoScreen(vm)
-                8 -> AiSettingsScreen(vm)
-                9 -> VoiceSettingsScreen(vm)
-                10 -> PluginsScreen(vm)
-                11 -> FlightRecordsScreen(vm)
-                12 -> DevToolsScreen(vm)
+                3 -> RadarScreen(vm)
+                4 -> MissionScreen(vm)
+                5 -> OffloadScreen(vm)
+                6 -> GalleryScreen(vm, onGoToOffload = { selectedTab = 5 })
+                7 -> DeviceScreen(vm)
+                8 -> DeviceInfoScreen(vm)
+                9 -> AiSettingsScreen(vm)
+                10 -> VoiceSettingsScreen(vm)
+                11 -> PluginsScreen(vm)
+                12 -> FlightRecordsScreen(vm)
+                13 -> DevToolsScreen(vm)
             }
         }
     }

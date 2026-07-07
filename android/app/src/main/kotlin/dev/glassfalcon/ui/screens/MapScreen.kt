@@ -11,6 +11,8 @@ import android.os.Bundle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,7 +56,10 @@ import org.maplibre.android.style.layers.FillLayer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
+import org.maplibre.android.style.layers.SymbolLayer
 import org.maplibre.android.style.sources.GeoJsonSource
+import kotlin.math.cos
+import kotlin.math.sin
 import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.LineString
@@ -89,6 +94,7 @@ fun MapSize.next(): MapSize = when (this) {
 private val DjiGreen = Color(0xFF00CC44)
 private val DjiAmber = Color(0xFFFFAA00)
 private val DjiRed   = Color(0xFFFF3333)
+private val DjiCyan  = Color(0xFF33CCFF)
 private val US_CENTER = LatLng(39.5, -98.35)
 
 /** Which metric colors the flight trail. */
@@ -288,6 +294,19 @@ fun FlightMapContainer(
     }
 }
 
+/** A single tappable status/toggle chip in the FULL-map control bar. Bright accent when [on],
+ *  dimmed grey when off, so its state reads at a glance. */
+@Composable
+private fun MapChip(label: String, accent: Color, on: Boolean, onClick: () -> Unit) {
+    Text(
+        label,
+        color = if (on) accent else Color.Gray,
+        fontWeight = FontWeight.Bold,
+        fontSize = 10.sp,
+        modifier = Modifier.clickable(onClick = onClick),
+    )
+}
+
 @Composable
 private fun PipBtn(label: String, onClick: () -> Unit) {
     Box(
@@ -333,6 +352,10 @@ fun FlightMap(
     var mapRef by remember { mutableStateOf<MapLibreMap?>(null) }
     var styleReady by remember { mutableStateOf(false) }
     var airspaceOn by remember { mutableStateOf(true) }
+    // New map-overhaul controls (session state; not persisted this pass).
+    var basemap by remember { mutableStateOf(Basemap.DARK) }
+    var radarOn by remember { mutableStateOf(true) }
+    var ringsOn by remember { mutableStateOf(true) }
 
     val mapView = remember {
         MapView(ctx).apply {
@@ -341,55 +364,20 @@ fun FlightMap(
                 map.uiSettings.isAttributionEnabled = false
                 map.uiSettings.isLogoEnabled = false
                 map.moveCamera(CameraUpdateFactory.newLatLngZoom(US_CENTER, 3.5))
-                map.setStyle(Style.Builder().fromUri(styleUri)) { style ->
-                    style.addSource(GeoJsonSource("gf-track"))
-                    style.addSource(GeoJsonSource("gf-home"))
-                    style.addSource(GeoJsonSource("gf-last"))
-                    style.addSource(GeoJsonSource("gf-drone"))
-                    style.addLayer(LineLayer("gf-track-l", "gf-track").withProperties(
-                        PropertyFactory.lineColor(trailColorExpression(trailMetric)),
-                        PropertyFactory.lineWidth(trailWidthExpression(trailMetric))))
-                    style.addLayer(circle("gf-last-l", "gf-last", "#FF3333", 6f))
-                    style.addLayer(circle("gf-home-l", "gf-home", "#3399FF", 7f))
-                    style.addLayer(circle("gf-drone-l", "gf-drone", "#00CC44", 8f))
-
-                    // Airspace overlay (FAA public data, initial placeholder bbox around
-                    // US_CENTER, corrected to the real position by the LaunchedEffect below
-                    // as soon as telemetry/home is known, same as gf-track/gf-home/etc.).
-                    val initBbox = US_CENTER.latitude to US_CENTER.longitude
-                    style.addSource(GeoJsonSource("gf-faa-sua", URI(faaQueryUrl("Special_Use_Airspace", wideBbox(initBbox.first, initBbox.second)))))
-                    style.addSource(GeoJsonSource("gf-faa-class", URI(faaQueryUrl("Class_Airspace", wideBbox(initBbox.first, initBbox.second)))))
-                    style.addSource(GeoJsonSource("gf-faa-grid", URI(faaQueryUrl("FAA_UAS_FacilityMap_Data", narrowBbox(initBbox.first, initBbox.second)))))
-                    style.addLayer(FillLayer("gf-faa-grid-fill", "gf-faa-grid").withProperties(
-                        PropertyFactory.fillColor(ceilingColorExpression()), PropertyFactory.fillOpacity(0.2f)))
-                    style.addLayer(FillLayer("gf-faa-class-fill", "gf-faa-class").withProperties(
-                        PropertyFactory.fillColor(android.graphics.Color.parseColor(AIRSPACE_CONTROLLED)), PropertyFactory.fillOpacity(0.15f)))
-                    style.addLayer(LineLayer("gf-faa-class-line", "gf-faa-class").withProperties(
-                        PropertyFactory.lineColor(AIRSPACE_CONTROLLED), PropertyFactory.lineWidth(1f)))
-                    style.addLayer(FillLayer("gf-faa-sua-fill", "gf-faa-sua").withProperties(
-                        PropertyFactory.fillColor(android.graphics.Color.parseColor(AIRSPACE_RESTRICTED)), PropertyFactory.fillOpacity(0.25f)))
-                    style.addLayer(LineLayer("gf-faa-sua-line", "gf-faa-sua").withProperties(
-                        PropertyFactory.lineColor(AIRSPACE_RESTRICTED), PropertyFactory.lineWidth(1.5f)))
-
-                    // AirSense (ADS-B / UAT IN) traffic radar — manned aircraft the drone's receiver
-                    // reported (see AirSenseState). Added LAST so blips sit above airspace fills and
-                    // the drone marker. Colour steps by warning level (amber→orange→red). Driven live
-                    // by the LaunchedEffect below; empty until real traffic (or a preview snapshot).
-                    style.addSource(GeoJsonSource("gf-adsb"))
-                    style.addLayer(CircleLayer("gf-adsb-ring", "gf-adsb").withProperties(
-                        PropertyFactory.circleColor(adsbWarnColor()),
-                        PropertyFactory.circleRadius(16f),
-                        PropertyFactory.circleOpacity(0.18f)))
-                    style.addLayer(CircleLayer("gf-adsb-l", "gf-adsb").withProperties(
-                        PropertyFactory.circleColor(adsbWarnColor()),
-                        PropertyFactory.circleRadius(6f),
-                        PropertyFactory.circleStrokeColor("#000000"),
-                        PropertyFactory.circleStrokeWidth(1.5f)))
-
-                    styleReady = true
-                }
                 mapRef = map
             }
+        }
+    }
+
+    // Style load + reload. Driven by (mapRef, basemap) so switching basemap re-loads the tiles and
+    // re-populates every GlassFalcon overlay via the shared populateGfStyle(); styleReady flips
+    // false→true which re-fires the data-push effects below so nothing goes blank after a switch.
+    LaunchedEffect(mapRef, basemap) {
+        val map = mapRef ?: return@LaunchedEffect
+        styleReady = false
+        map.setStyle(basemapStyle(ctx, basemap)) { style ->
+            populateGfStyle(style, trailMetric)
+            styleReady = true
         }
     }
 
@@ -448,7 +436,7 @@ fun FlightMap(
 
     var hasFitTrackOnce by remember { mutableStateOf(false) }
 
-    LaunchedEffect(styleReady, track, trailMetric, drone.lat, drone.lon, drone.speed, home, lastKnown, airSense) {
+    LaunchedEffect(styleReady, track, trailMetric, drone.lat, drone.lon, drone.speed, drone.yaw, home, lastKnown, airSense, radarOn, ringsOn) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleReady) return@LaunchedEffect
         val style = map.style ?: return@LaunchedEffect
@@ -458,7 +446,12 @@ fun FlightMap(
         (style.getSource("gf-last") as? GeoJsonSource)?.setGeoJson(pointFc(lastKnown))
         val dronePos = if (drone.hasGpsFix && drone.lat != 0.0) drone.lat to drone.lon else null
         (style.getSource("gf-drone") as? GeoJsonSource)?.setGeoJson(pointFc(dronePos))
-        (style.getSource("gf-adsb") as? GeoJsonSource)?.setGeoJson(airSenseFc(airSense.targets))
+        (style.getSource("gf-drone-hdg") as? GeoJsonSource)?.setGeoJson(droneHdgFc(dronePos, drone.yaw))
+        // ADS-B blips only when the radar is on; range rings centered on the best-known position.
+        (style.getSource("gf-adsb") as? GeoJsonSource)?.setGeoJson(
+            airSenseFc(if (radarOn) airSense.targets else emptyList()))
+        (style.getSource("gf-rings") as? GeoJsonSource)?.setGeoJson(
+            ringsFc(if (ringsOn) (dronePos ?: effPos) else null, listOf(500, 1000, 2000)))
 
         if (fitTrackOnLoad) {
             // Frame the WHOLE recorded path once, not "current position at a live-flying zoom"
@@ -487,37 +480,24 @@ fun FlightMap(
     Box(modifier.background(Color(0xFF0B0B0B))) {
         AndroidView(factory = { mapView }, modifier = Modifier.fillMaxSize().alpha(mapAlpha))
         if (!compact) {
+            // Horizontally scrollable so every control stays reachable no matter how many chips
+            // are added or how narrow the screen — nothing runs off the edge and disappears.
             Row(
-                Modifier.fillMaxWidth().glass(shape = RectangleShape).padding(horizontal = 12.dp, vertical = 6.dp),
+                Modifier.fillMaxWidth().glass(shape = RectangleShape)
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Text("MAP", color = DjiGreen, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                Spacer(Modifier.width(10.dp))
-                Text(if (offline) "no connection, bundled offline fallback (no map detail)" else "online OSM",
-                    color = if (offline) DjiGreen else DjiAmber, fontSize = 10.sp)
-                Spacer(Modifier.weight(1f))
-                if (!drone.hasGpsFix) {
-                    Text("NO GPS, last-known shown", color = DjiRed, fontSize = 10.sp)
-                    Spacer(Modifier.width(10.dp))
-                }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        if (airspaceOn) "AIRSPACE" else "airspace off",
-                        color = if (airspaceOn) DjiAmber else Color.Gray,
-                        fontWeight = FontWeight.Bold, fontSize = 10.sp,
-                        modifier = Modifier.clickable { airspaceOn = !airspaceOn },
-                    )
-                    if (airspaceOn) Text("FAA data, advisory, not for flight planning", color = Color.Gray, fontSize = 8.sp)
-                }
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    if (autoZoom) "AUTO-ZOOM" else "zoom locked",
-                    color = if (autoZoom) DjiGreen else Color.Gray,
-                    fontWeight = FontWeight.Bold, fontSize = 10.sp,
-                    modifier = Modifier.clickable { onAutoZoom(!autoZoom) },
-                )
-                Spacer(Modifier.width(10.dp))
+                MapChip("⛰ ${basemap.label}", DjiCyan, on = true) { basemap = basemap.next() }
+                MapChip(if (radarOn) "◎ RADAR" else "radar off", DjiGreen, radarOn) { radarOn = !radarOn }
+                MapChip(if (ringsOn) "◯ RINGS" else "rings off", DjiCyan, ringsOn) { ringsOn = !ringsOn }
+                MapChip(if (airspaceOn) "AIRSPACE" else "airspace off", DjiAmber, airspaceOn) { airspaceOn = !airspaceOn }
+                MapChip(if (autoZoom) "AUTO-ZOOM" else "zoom locked", DjiGreen, autoZoom) { onAutoZoom(!autoZoom) }
+                if (!drone.hasGpsFix) Text("NO GPS", color = DjiRed, fontWeight = FontWeight.Bold, fontSize = 10.sp)
                 TrailLegend(trailMetric, expanded = true, onChange = onTrailMetric)
+                Text(if (offline) "offline" else "online", color = if (offline) DjiGreen else DjiAmber, fontSize = 10.sp)
             }
         }
     }
@@ -557,15 +537,186 @@ private fun pointFc(p: Pair<Double, Double>?): FeatureCollection =
     if (p == null) FeatureCollection.fromFeatures(emptyArray())
     else FeatureCollection.fromFeature(Feature.fromGeometry(Point.fromLngLat(p.second, p.first)))
 
-/** One point per valid AirSense target, carrying its warning level so [adsbWarnColor] can tint it. */
+/** One point per valid AirSense target. Carries the full modeled state (warn level, heading,
+ *  altitude, relative altitude, distance, ICAO) so the radar can rotate the blip to the aircraft's
+ *  track, tint it by threat, and print a callsign/relative-altitude label — the AirSenseTarget
+ *  model already has all of this; the old renderer threw everything but lat/lon/warn away. */
 private fun airSenseFc(targets: List<AirSenseTarget>): FeatureCollection =
     FeatureCollection.fromFeatures(targets.filter { it.valid }.map { t ->
+        val relSign = if (t.relAltM >= 0) "+" else ""
+        val distKm = t.distanceM / 1000.0
         val props = com.google.gson.JsonObject().apply {
             addProperty("warn", t.warningLevel)
             addProperty("icao", t.icao)
+            addProperty("hdg", t.headingDeg)
+            addProperty("alt", t.altM)
+            addProperty("relalt", t.relAltM)
+            addProperty("dist", t.distanceM)
+            // Pre-composed so the SymbolLayer needs no string-concat expression: "ICAO\n+120m ·1.4km".
+            addProperty("label", "${t.icao}\n$relSign${t.relAltM}m ·%.1fkm".format(distKm))
         }
         Feature.fromGeometry(Point.fromLngLat(t.lon, t.lat), props)
     })
+
+/** Concentric range rings centered on [center] at the given radii (metres) — the "radar scope"
+ *  overlay. Each ring is a 64-point polygon approximated with a local flat-earth metres→degrees
+ *  conversion (fine at these radii/latitudes); carries its radius label for the ring legend. */
+private fun ringsFc(center: Pair<Double, Double>?, radiiM: List<Int>): FeatureCollection {
+    if (center == null) return FeatureCollection.fromFeatures(emptyArray())
+    val (lat, lon) = center
+    val mPerDegLat = 111_320.0
+    val mPerDegLon = 111_320.0 * cos(Math.toRadians(lat)).coerceAtLeast(1e-6)
+    val feats = radiiM.map { rM ->
+        val pts = (0..64).map { i ->
+            val a = Math.toRadians(i * 360.0 / 64.0)
+            Point.fromLngLat(
+                lon + (rM * sin(a)) / mPerDegLon,
+                lat + (rM * cos(a)) / mPerDegLat,
+            )
+        }
+        Feature.fromGeometry(LineString.fromLngLats(pts)).apply { addNumberProperty("r", rM) }
+    }
+    return FeatureCollection.fromFeatures(feats)
+}
+
+/** The drone as a heading-carrying feature so a rotated chevron can point where its nose is. */
+private fun droneHdgFc(pos: Pair<Double, Double>?, yawDeg: Float): FeatureCollection {
+    if (pos == null) return FeatureCollection.fromFeatures(emptyArray())
+    val props = com.google.gson.JsonObject().apply { addProperty("yaw", yawDeg.toDouble()) }
+    return FeatureCollection.fromFeature(Feature.fromGeometry(Point.fromLngLat(pos.second, pos.first), props))
+}
+
+/** A small upward-pointing SDF triangle used for heading-rotated markers (ADS-B traffic + the
+ *  drone's own nose). SDF so a single white bitmap can be tinted per-layer/per-feature via
+ *  iconColor; drawn pointing "north" (up) so iconRotate = compass heading works directly. */
+private fun triangleBitmap(sizePx: Int = 36): android.graphics.Bitmap {
+    val bmp = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+    val c = android.graphics.Canvas(bmp)
+    val p = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE; style = android.graphics.Paint.Style.FILL
+    }
+    val path = android.graphics.Path().apply {
+        moveTo(sizePx / 2f, sizePx * 0.08f)
+        lineTo(sizePx * 0.86f, sizePx * 0.92f)
+        lineTo(sizePx * 0.14f, sizePx * 0.92f)
+        close()
+    }
+    c.drawPath(path, p)
+    return bmp
+}
+
+/** Which basemap the FULL map draws under the GlassFalcon overlays. Dark matches the HUD; Streets
+ *  is a labeled day map; Satellite is Esri World Imagery (public raster) for terrain/obstacle scan. */
+enum class Basemap(val label: String) { DARK("Dark"), STREETS("Streets"), SATELLITE("Satellite") }
+
+fun Basemap.next(): Basemap = Basemap.entries[(ordinal + 1) % Basemap.entries.size]
+
+/** Build the MapLibre style for a basemap. Falls back to the bundled offline style when there's
+ *  no network (all three online basemaps need tiles). Satellite is an inline raster style. */
+private fun basemapStyle(ctx: android.content.Context, basemap: Basemap): Style.Builder {
+    val cm = ctx.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+    val online = cm.getNetworkCapabilities(cm.activeNetwork)
+        ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+    if (!online) return Style.Builder().fromUri("asset://offline_style.json")
+    return when (basemap) {
+        Basemap.DARK    -> Style.Builder().fromUri("https://tiles.openfreemap.org/styles/dark")
+        Basemap.STREETS -> Style.Builder().fromUri("https://tiles.openfreemap.org/styles/liberty")
+        Basemap.SATELLITE -> Style.Builder().fromJson(
+            """{"version":8,"sources":{"sat":{"type":"raster",""" +
+            """"tiles":["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],""" +
+            """"tileSize":256,"maxzoom":19,"attribution":"Esri"}},""" +
+            """"layers":[{"id":"sat","type":"raster","source":"sat"}]}"""
+        )
+    }
+}
+
+/** Adds every GlassFalcon overlay (track, markers, airspace, range rings, ADS-B radar, drone
+ *  heading) to a freshly-loaded [style]. Extracted so both the initial load and a basemap switch
+ *  populate the style identically. Runtime-guarded per group so one failing add can't blank the
+ *  whole overlay set. */
+private fun populateGfStyle(style: Style, trailMetric: TrailMetric) {
+    runCatching {
+        style.addSource(GeoJsonSource("gf-track"))
+        style.addSource(GeoJsonSource("gf-home"))
+        style.addSource(GeoJsonSource("gf-last"))
+        style.addSource(GeoJsonSource("gf-drone"))
+        style.addSource(GeoJsonSource("gf-drone-hdg"))
+        style.addSource(GeoJsonSource("gf-rings"))
+        style.addLayer(LineLayer("gf-track-l", "gf-track").withProperties(
+            PropertyFactory.lineColor(trailColorExpression(trailMetric)),
+            PropertyFactory.lineWidth(trailWidthExpression(trailMetric))))
+        style.addLayer(circle("gf-last-l", "gf-last", "#FF3333", 6f))
+        style.addLayer(circle("gf-home-l", "gf-home", "#3399FF", 7f))
+        style.addLayer(circle("gf-drone-l", "gf-drone", "#00CC44", 8f))
+    }
+
+    // FAA airspace overlay (public data; corrected to real position by the LaunchedEffect).
+    runCatching {
+        val initBbox = US_CENTER.latitude to US_CENTER.longitude
+        style.addSource(GeoJsonSource("gf-faa-sua", URI(faaQueryUrl("Special_Use_Airspace", wideBbox(initBbox.first, initBbox.second)))))
+        style.addSource(GeoJsonSource("gf-faa-class", URI(faaQueryUrl("Class_Airspace", wideBbox(initBbox.first, initBbox.second)))))
+        style.addSource(GeoJsonSource("gf-faa-grid", URI(faaQueryUrl("FAA_UAS_FacilityMap_Data", narrowBbox(initBbox.first, initBbox.second)))))
+        style.addLayer(FillLayer("gf-faa-grid-fill", "gf-faa-grid").withProperties(
+            PropertyFactory.fillColor(ceilingColorExpression()), PropertyFactory.fillOpacity(0.2f)))
+        style.addLayer(FillLayer("gf-faa-class-fill", "gf-faa-class").withProperties(
+            PropertyFactory.fillColor(android.graphics.Color.parseColor(AIRSPACE_CONTROLLED)), PropertyFactory.fillOpacity(0.15f)))
+        style.addLayer(LineLayer("gf-faa-class-line", "gf-faa-class").withProperties(
+            PropertyFactory.lineColor(AIRSPACE_CONTROLLED), PropertyFactory.lineWidth(1f)))
+        style.addLayer(FillLayer("gf-faa-sua-fill", "gf-faa-sua").withProperties(
+            PropertyFactory.fillColor(android.graphics.Color.parseColor(AIRSPACE_RESTRICTED)), PropertyFactory.fillOpacity(0.25f)))
+        style.addLayer(LineLayer("gf-faa-sua-line", "gf-faa-sua").withProperties(
+            PropertyFactory.lineColor(AIRSPACE_RESTRICTED), PropertyFactory.lineWidth(1.5f)))
+    }
+
+    // Range rings (radar scope), drawn above airspace, below the markers/traffic.
+    runCatching {
+        style.addLayer(LineLayer("gf-rings-l", "gf-rings").withProperties(
+            PropertyFactory.lineColor("#33CCFF"),
+            PropertyFactory.lineWidth(1f),
+            PropertyFactory.lineOpacity(0.35f),
+            PropertyFactory.lineDasharray(arrayOf(2f, 3f))))
+    }
+
+    // Shared SDF chevron for heading-rotated markers.
+    runCatching { style.addImage("gf-tri", triangleBitmap(), true) }
+
+    // AirSense (ADS-B / UAT IN) traffic radar. Halo ring + heading-rotated chevron tinted by
+    // threat level + a callsign/relative-altitude label. Added LAST so it sits on top.
+    runCatching {
+        style.addSource(GeoJsonSource("gf-adsb"))
+        style.addLayer(CircleLayer("gf-adsb-ring", "gf-adsb").withProperties(
+            PropertyFactory.circleColor(adsbWarnColor()),
+            PropertyFactory.circleRadius(16f),
+            PropertyFactory.circleOpacity(0.18f)))
+        style.addLayer(SymbolLayer("gf-adsb-sym", "gf-adsb").withProperties(
+            PropertyFactory.iconImage("gf-tri"),
+            PropertyFactory.iconSize(0.6f),
+            PropertyFactory.iconRotate(Expression.toNumber(Expression.get("hdg"))),
+            PropertyFactory.iconColor(adsbWarnColor()),
+            PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP)))
+        style.addLayer(SymbolLayer("gf-adsb-label", "gf-adsb").withProperties(
+            PropertyFactory.textField(Expression.get("label")),
+            PropertyFactory.textSize(9f),
+            PropertyFactory.textColor(adsbWarnColor()),
+            PropertyFactory.textHaloColor("#000000"),
+            PropertyFactory.textHaloWidth(1.2f),
+            PropertyFactory.textOffset(arrayOf(0f, 1.4f)),
+            PropertyFactory.textAllowOverlap(true),
+            PropertyFactory.textAnchor(Property.TEXT_ANCHOR_TOP)))
+    }
+
+    // Drone nose-direction chevron on top of the drone dot.
+    runCatching {
+        style.addLayer(SymbolLayer("gf-drone-hdg-l", "gf-drone-hdg").withProperties(
+            PropertyFactory.iconImage("gf-tri"),
+            PropertyFactory.iconSize(0.5f),
+            PropertyFactory.iconRotate(Expression.toNumber(Expression.get("yaw"))),
+            PropertyFactory.iconColor("#00CC44"),
+            PropertyFactory.iconAllowOverlap(true),
+            PropertyFactory.iconRotationAlignment(Property.ICON_ROTATION_ALIGNMENT_MAP)))
+    }
+}
 
 /** Radar blip colour by AirSense warning level: amber (low) → orange (2) → red (3+). */
 private fun adsbWarnColor(): Expression =

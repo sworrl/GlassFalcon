@@ -50,8 +50,11 @@ class FlightDumpRecorder(private val ctx: Context) {
     fun start(reason: String) {
         if (_active.value) return
         val dir = File(ctx.getExternalFilesDir(null), "dumps").apply { mkdirs() }
-        val f = File(dir, "gfdump_${System.currentTimeMillis()}.txt")
-        writer = f.bufferedWriter().also {
+        // Dumps contain lat/lon-bearing telemetry frames and can reach hundreds of MB, so they're
+        // encrypted while streaming: FileOutputStream → AES-GCM CipherOutputStream → BufferedWriter.
+        // The GCM tag is written when the writer is closed in stop(). Extension .gfd = encrypted.
+        val f = File(dir, "gfdump_${System.currentTimeMillis()}.gfd")
+        writer = SecureStore.encryptingStream(java.io.FileOutputStream(f)).bufferedWriter().also {
             it.appendLine("# GlassFalcon flight dump")
             it.appendLine("# reason: $reason")
             it.appendLine("# started_ms: ${System.currentTimeMillis()}")
@@ -90,4 +93,18 @@ class FlightDumpRecorder(private val ctx: Context) {
 
     fun dumpFiles(): List<File> =
         File(ctx.getExternalFilesDir(null), "dumps").listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList()
+
+    /** Decrypt an encrypted (.gfd) dump to a plaintext temp in cache for an explicit export/read;
+     *  a legacy plaintext (.txt) dump is returned as-is. */
+    fun exportPlaintext(f: File): File {
+        if (f.extension != "gfd") return f
+        val out = File(ctx.cacheDir, f.nameWithoutExtension + ".txt")
+        SecureStore.decryptingStream(f.inputStream()).use { input ->
+            out.outputStream().use { input.copyTo(it) }
+        }
+        return out
+    }
+
+    /** Securely erase a dump file (see SecureStore.secureDelete). */
+    fun secureDeleteDump(f: File) = SecureStore.secureDelete(f)
 }

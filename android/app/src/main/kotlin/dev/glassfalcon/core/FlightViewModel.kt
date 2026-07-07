@@ -248,7 +248,12 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     // AI/co-pilot settings persistence. These used to live only in the in-memory AppState, so the
     // co-pilot mode and both API keys reset to defaults on every app restart (the settings screen
     // even warned about it). Now persisted here and loaded once in init so they survive a relaunch.
-    private val aiPrefs = GlassFalconApp.ctx.getSharedPreferences("glassfalcon_ai", android.content.Context.MODE_PRIVATE)
+    // API keys are secrets: stored in EncryptedSharedPreferences (Keystore-backed), not plaintext.
+    // Any keys written by an older build to the plaintext "glassfalcon_ai" store are migrated in
+    // and the plaintext copy is wiped, so a device pulled after this update has no cleartext key.
+    private val aiPrefs = SecureStore.encryptedPrefs(GlassFalconApp.ctx, "glassfalcon_ai_secure").also {
+        SecureStore.migratePlaintextPrefs(GlassFalconApp.ctx, "glassfalcon_ai", it)
+    }
     private fun loadAiPrefs() {
         val mode = runCatching { CopilotMode.valueOf(aiPrefs.getString("copilot_mode", CopilotMode.OFF.name)!!) }
             .getOrDefault(CopilotMode.OFF)
@@ -753,8 +758,14 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
             }
         }
         // TapFly's obstacle-ahead stop check needs the same live vision/obstacle reading the HUD
-        // glow already shows, see ObstacleState.frontClosest.
-        viewModelScope.launch { decoder.obstacle.collect { tapFly.attachObstacleState(it) } }
+        // glow already shows, see ObstacleState.frontClosest. ActiveTrack's follow mode gates its
+        // forward pitch on the same reading.
+        viewModelScope.launch {
+            decoder.obstacle.collect {
+                tapFly.attachObstacleState(it)
+                activeTrack.attachObstacleState(it)
+            }
+        }
         viewModelScope.launch { monitorLinkAndWarnings() }
         // Mobile-GPS → flight controller push. THE fix for the "stuck at 30 m" cap: a kprobe
         // capture of DJI GO 4 (2026-07-05) showed it streams the phone's GPS to the FC via
@@ -1582,6 +1593,13 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
         activeTrack.selectAtTap(xFrac, yFrac)
     }
 
+    /** Toggle ActiveTrack follow-at-a-distance (drone drives forward/back to hold the subject's
+     *  apparent size) vs the default watch-me (yaw-in-place only). Sticky across arm cycles. */
+    fun setActiveTrackFollow(on: Boolean) {
+        activeTrack.setFollow(on)
+        log(if (on) "ActiveTrack follow ENABLED, drone will hold distance" else "ActiveTrack follow off, watch-me only")
+    }
+
     fun stopActiveTrack() {
         activeTrack.stop()
         log("ActiveTrack stopped")
@@ -1807,6 +1825,11 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     fun tapFocus(x: Float, y: Float) { sendCamLogged(Camera.setFocusRegion(x, y), "Tap focus @ %.2f,%.2f".format(x, y)) }
     fun setCameraAeLock(locked: Boolean) { sendCamLogged(Camera.setAeLock(locked), if (locked) "AE locked" else "AE unlocked") }
     fun setAntiFlicker(i: Int)    { sendCamLogged(Camera.setAntiFlicker(i), "Flicker → ${if (i==0) "50" else "60"}Hz") }
+    // Exposure program (0x02/0x1e): 0 Auto/P, 1 Shutter-priority, 2 Aperture-priority, 3 Manual,
+    // per DJI's camera exposure-mode enum. Color/look profile (0x02/0x42): 0 Normal … 9+ D-Log etc.
+    // Both are set-only indices, the camera echoes the result in the 0x80 Camera State push.
+    fun setCameraExpMode(i: Int)  { sendCamLogged(Camera.setExpMode(i), "Exposure mode → idx $i") }
+    fun setCameraColor(i: Int)    { sendCamLogged(Camera.setColor(i), "Color profile → idx $i") }
 
     // cmd_id 0x70/0x71 are requests, the camera answers with the 0x80 Camera State Info push
     // that TelemetryDecoder parses into `cameraState` (mode/recording/sd_inserted/sd_error).

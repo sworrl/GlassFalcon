@@ -104,6 +104,71 @@ fun AiSettingsScreen(vm: FlightViewModel) {
             }
         }
 
+        // Typed co-pilot Q&A. Push-to-talk was the only way to ask the co-pilot anything; this
+        // types the same question straight into askCoPilot() for quiet environments or when the
+        // mic isn't practical. Answer + thinking state are the same flows the voice path uses.
+        Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Ask the Co-Pilot (typed)", color = TextSec, fontSize = 11.sp)
+                val answer by vm.coPilotAnswer.collectAsState()
+                val thinking by vm.coPilotThinking.collectAsState()
+                var question by remember { mutableStateOf("") }
+                val canAsk = question.isNotBlank() &&
+                    app.copilotMode != CopilotMode.OFF && app.copilotMode != CopilotMode.RULE_BASED
+                OutlinedTextField(
+                    value = question,
+                    onValueChange = { question = it },
+                    label = { Text("Type a question for the co-pilot…", fontSize = 10.sp) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = { vm.askCoPilot(question.trim()); question = "" },
+                    enabled = canAsk,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Gold.copy(alpha = 0.2f)),
+                ) { Text("Ask", color = Gold, fontSize = 12.sp) }
+                when {
+                    app.copilotMode == CopilotMode.OFF || app.copilotMode == CopilotMode.RULE_BASED ->
+                        Text("Pick an AI co-pilot mode above to enable questions.", color = TextSec, fontSize = 9.sp)
+                    thinking -> Text("Thinking…", color = Gold, fontSize = 12.sp)
+                    answer.isNotBlank() -> Text(answer, color = TextPri, fontSize = 12.sp, lineHeight = 16.sp)
+                }
+            }
+        }
+
+        // Windy weather keys. GlassFalcon shows a live weather readout when a Windy API key is
+        // set; there was no field to enter one. Point-forecast and map keys are separate Windy
+        // products, so both are offered; leave a field blank to send none for it.
+        Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Weather (Windy API)", color = TextSec, fontSize = 11.sp)
+                val weather by vm.weather.collectAsState()
+                var pointKey by remember { mutableStateOf("") }
+                var mapKey by remember { mutableStateOf("") }
+                OutlinedTextField(
+                    value = pointKey, onValueChange = { pointKey = it },
+                    label = { Text("Windy Point-Forecast key", fontSize = 10.sp) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = mapKey, onValueChange = { mapKey = it },
+                    label = { Text("Windy Map key (optional)", fontSize = 10.sp) },
+                    singleLine = true, modifier = Modifier.fillMaxWidth(),
+                )
+                Button(
+                    onClick = { vm.setWindyKeys(pointKey.trim().ifBlank { null }, mapKey.trim().ifBlank { null }, null) },
+                    enabled = pointKey.isNotBlank() || mapKey.isNotBlank(),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Gold.copy(alpha = 0.2f)),
+                ) { Text("Save keys & fetch", color = Gold, fontSize = 12.sp) }
+                Text(
+                    if (weather != null) "✓ Weather data loaded." else "No weather yet. A free key is at api.windy.com.",
+                    color = if (weather != null) DjiGreen else TextSec, fontSize = 9.sp,
+                )
+            }
+        }
+
         Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text("Controller Buttons", color = TextSec, fontSize = 11.sp)

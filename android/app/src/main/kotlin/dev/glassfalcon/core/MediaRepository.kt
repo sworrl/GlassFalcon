@@ -135,7 +135,9 @@ class LocalFolderMediaRepository(
     override fun delete(item: MediaItem): Boolean {
         thumbCache.remove(item.id)
         metaCache.remove(item.id)
-        val ok = item.file.delete()
+        // Overwrite-then-unlink: captured media can carry GPS EXIF, so wipe rather than plain delete.
+        SecureStore.secureDelete(item.file)
+        val ok = !item.file.exists()
         if (ok) refresh()
         return ok
     }
@@ -145,7 +147,8 @@ class LocalFolderMediaRepository(
         for (item in itemsToDelete) {
             thumbCache.remove(item.id)
             metaCache.remove(item.id)
-            if (item.file.delete()) deleted++
+            SecureStore.secureDelete(item.file)
+            if (!item.file.exists()) deleted++
         }
         if (deleted > 0) refresh()
         return deleted

@@ -70,20 +70,57 @@ data class FlightRecord(
  *  start time so listing is naturally chronological. No database needed for what's realistically
  *  a few dozen to a few hundred records. */
 object FlightRecordStore {
+    // Records hold lat/lon + operator home point — encrypted at rest (see SecureStore). Encrypted
+    // files use the .gfr extension; legacy plaintext .json files from older builds are migrated to
+    // .gfr on first load and then securely wiped.
     private fun dir(): File =
         File(GlassFalconApp.ctx.getExternalFilesDir(null), "flight_records").apply { mkdirs() }
 
+    private fun encFile(id: String) = File(dir(), "$id.gfr")
+
     fun save(record: FlightRecord) {
-        File(dir(), "${record.id}.json").writeText(record.toJson().toString())
+        SecureStore.writeEncrypted(encFile(record.id), record.toJson().toString().toByteArray(Charsets.UTF_8))
     }
 
-    fun loadAll(): List<FlightRecord> =
-        dir().listFiles { f -> f.extension == "json" }
-            ?.mapNotNull { f -> runCatching { FlightRecord.fromJson(JSONObject(f.readText())) }.getOrNull() }
+    fun loadAll(): List<FlightRecord> {
+        val d = dir()
+        // Migrate any leftover plaintext records first, then wipe the cleartext copy.
+        d.listFiles { f -> f.extension == "json" }?.forEach { legacy ->
+            runCatching {
+                val rec = FlightRecord.fromJson(JSONObject(legacy.readText()))
+                save(rec)
+                SecureStore.secureDelete(legacy)
+            }
+        }
+        return d.listFiles { f -> f.extension == "gfr" }
+            ?.mapNotNull { f ->
+                runCatching {
+                    FlightRecord.fromJson(JSONObject(String(SecureStore.readEncrypted(f), Charsets.UTF_8)))
+                }.getOrNull()
+            }
             ?.sortedByDescending { it.startedAtMs }
             ?: emptyList()
+    }
 
-    fun file(record: FlightRecord): File = File(dir(), "${record.id}.json")
+    /** The encrypted at-rest file. Not human-readable — use [exportPlaintext] for sharing. */
+    fun file(record: FlightRecord): File = encFile(record.id)
+
+    /** Securely erase a record (encrypted + any legacy plaintext). */
+    fun delete(record: FlightRecord) {
+        SecureStore.secureDelete(encFile(record.id))
+        SecureStore.secureDelete(File(dir(), "${record.id}.json"))
+    }
+
+    /**
+     * Decrypt a record to a temporary plaintext JSON file in cache for an explicit user export
+     * (Share sheet). This is the one moment the data is intentionally in the clear — the user chose
+     * to send it. Lives in cacheDir so the OS can reclaim it.
+     */
+    fun exportPlaintext(record: FlightRecord): File {
+        val out = File(GlassFalconApp.ctx.cacheDir, "flight_${record.id}.json")
+        out.writeText(String(SecureStore.readEncrypted(encFile(record.id)), Charsets.UTF_8))
+        return out
+    }
 }
 
 /** Concrete, checkable milestones only, no "Great flight!" filler. Each badge names the exact

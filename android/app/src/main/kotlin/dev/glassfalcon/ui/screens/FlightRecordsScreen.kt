@@ -314,7 +314,9 @@ private fun dateFmt(ms: Long) = dev.glassfalcon.core.Units.dateTime(ms)
  *  WiFi/Bluetooth with no relay server, without GlassFalcon having to implement discovery
  *  itself. A FileProvider is required to share a file URI to another app on modern Android. */
 private fun shareRecord(context: android.content.Context, record: FlightRecord) {
-    val file = FlightRecordStore.file(record)
+    // Records are encrypted at rest; decrypt to a temp file only for this explicit user-initiated
+    // share (the recipient needs readable JSON).
+    val file = FlightRecordStore.exportPlaintext(record)
     val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
     val intent = Intent(Intent.ACTION_SEND).apply {
         type = "application/json"
