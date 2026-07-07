@@ -63,11 +63,22 @@ data class TrackPoint(
     val tMs: Long = 0L, val battPct: Int = -1,
 )
 
+// GO4-parity 30 m unlock experiment (2026-07-07). Flip to false to restore the full
+// write-based unlock (auto beginner-off + max-height/radius writes + 0x11/0x43 auth). When true,
+// the app matches DJI GO4's proven locked-FC unlock: mobile-GPS stream only, no config writes,
+// no auth frames. See duml.minimalUnlockMode and autoDisableBeginner.
+private const val MINIMAL_UNLOCK_EXPERIMENT = true
+
 class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySource {
     val duml    = DumlConnection()
     val decoder = TelemetryDecoder()
     val video   = VideoDecoder()
     private val videoListener: (ByteArray) -> Unit = { video.onVideoPayload(it) }
+
+    init {
+        // Enable frame filtering when minimal unlock experiment is active
+        duml.minimalUnlockMode = MINIMAL_UNLOCK_EXPERIMENT
+    }
 
     val mission = MissionEngine(duml, viewModelScope)
     val offload = OffloadManager(viewModelScope)
@@ -529,10 +540,15 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
 
     // Preset tunes via index params (indices from the wm240 param table). "Faster but stable", 
     // raises the SPEED LIMITS toward DJI's tested max, never the control-loop gains.
+    // "As physically fast as it can be": probeThenSet clamps each target to the FC's OWN probed
+    // min/max, so requesting ±10000 writes the aircraft's true hardware limit for that param, not
+    // a hand-picked value. Max lean angle = max horizontal speed; max vert vel up/down = fastest
+    // climb/descent. NOTE: these are 0x03/0xe3 config writes — blocked during MINIMAL_UNLOCK, so
+    // apply them only AFTER the GPS-only unlock is confirmed (see MINIMAL_UNLOCK_EXPERIMENT).
     fun sportBoost() = viewModelScope.launch {
-        probeThenSet(1257, 50.0)   // mode_sport_cfg.tilt_atti_range 35→50° (max 60) = faster horiz
-        probeThenSet(1260, 8.0)    // mode_sport_cfg.vert_vel_up 5→8 m/s
-        probeThenSet(1261, -6.0)   // mode_sport_cfg.vert_vel_down -3→-6 m/s
+        probeThenSet(1257,  10000.0)   // mode_sport_cfg.tilt_atti_range → FC max lean (fastest horiz)
+        probeThenSet(1260,  10000.0)   // mode_sport_cfg.vert_vel_up     → FC max climb rate
+        probeThenSet(1261, -10000.0)   // mode_sport_cfg.vert_vel_down   → FC max descent rate
     }.let {}
     fun maxWindResistance() = viewModelScope.launch {
         probeThenSet(628, 100.0)   // control.wind_anti_intensity 60→100 (max)
@@ -575,6 +591,12 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
 
     init {
         loadAiPrefs()
+        // GO4-parity 30 m unlock experiment (2026-07-07). The locked-FC GO4 capture proved the
+        // cap lifts on the mobile-GPS stream ALONE; our 0x03/0xf9 config writes appear to re-lock
+        // it. Match GO4 exactly: drop config writes + auth at the wire (minimalUnlockMode), skip
+        // the on-connect auth sender (guarded in startAuthFrameSender), and stop the auto
+        // beginner/limit writes at the source (autoDisableBeginner = false). The GPS stream stays.
+        duml.minimalUnlockMode = MINIMAL_UNLOCK_EXPERIMENT
         duml.addListener { frame ->
             val now = System.currentTimeMillis()
             lastAnyFrameMs = now
@@ -767,14 +789,15 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
             }
         }
         viewModelScope.launch { monitorLinkAndWarnings() }
-        // Mobile-GPS → flight controller push. THE fix for the "stuck at 30 m" cap: a kprobe
-        // capture of DJI GO 4 (2026-07-05) showed it streams the phone's GPS to the FC via
-        // 0x03/0x20 "Send GPS To Flyc" every few seconds, and GlassFalcon never did, so the FC
-        // withheld the full flight envelope and clamped to ~30 m. Send it at 2 Hz whenever we have
-        // a link and a phone fix. Uses the phone's own GPS (that's what "mobile GPS" means here).
+        // Mobile-GPS → flight controller push. THE unlock for the "stuck at 30 m" cap: the
+        // locked-FC DJI GO 4 capture (2026-07-06) proved GO4 lifts the cap with this 0x03/0x20
+        // "Send GPS To Flyc" stream ALONE, sent at a ~5 s cadence (README "30m Geofence Unlock
+        // Mechanism"). We now match GO4's rate EXACTLY — no faster (2 Hz was our own choice, not
+        // GO4's) — and pair it with the no-config-write GO4-parity mode above.
+        val GPS_STREAM_INTERVAL_MS = 5_000L   // GO4's measured cadence; do not lower
         viewModelScope.launch {
             while (isActive) {
-                delay(500)
+                delay(GPS_STREAM_INTERVAL_MS)
                 if (_droneLinked.value) {
                     // Prefer the phone's own GPS (true "mobile device" position). Live capture on a
                     // real flight showed this was firing ZERO times, the phone fix was null (no
@@ -1338,7 +1361,9 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     override fun onCleared() {
         super.onCleared()
         duml.removeVideoListener(videoListener)
+        duml.onTx = null
         duml.stopCapture()
+        flightDump.stop()   // flush + finalize the encrypted .gfd (raw .bin needs no finalize)
         video.stop()
         tts?.shutdown()
         speechRecognizer?.destroy()
@@ -1366,6 +1391,18 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
             log("Raw capture → ${file.absolutePath}")
         } catch (e: Exception) {
             log("Capture start failed: ${e.message}")
+        }
+        // Outbound frames into the human-readable dump (inbound already flows via decoder.feed's
+        // flightDump.record call). The raw .bin above has both directions regardless; this makes
+        // the readable .gfd trace complete too.
+        duml.onTx = { cs, id, raw -> flightDump.record(cs, id, raw, outbound = true) }
+        // Beta/debug default: capture a full readable session trace connect→disconnect with no
+        // manual arming, so a whole flight (pre-arm handshake included) is logged. A deliberate
+        // debug-mode-off (persisted) opts out; the narrower auto-dump-on-takeoff mode still works
+        // independently for anyone who prefers only the airborne window.
+        if (flightDump.debugMode && !flightDump.active.value) {
+            flightDump.start("debug: full session (connect)")
+            log("Debug dump → ${flightDump.dumpFiles().firstOrNull()?.absolutePath ?: "started"}")
         }
     }
 
@@ -1933,6 +1970,10 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     fun autoLand()        { duml.send(FlyC.autoLand()); duml.sendRc(Rc.pushBuzzer()); log("Auto landing commanded"); voice.announce(AnnounceCategory.COMMANDS, "Landing", urgent = true) }
     fun emergencyStop()   { mission.abort(); duml.send(FlyC.emergencyStop()); log("EMERGENCY STOP") }
     fun startAuthFrameSender() {
+        // GO4-parity experiment: GO4 sends no auth frames and still unlocks; the FC ignores ours
+        // entirely (0 responses to 556 sent, verified in flight.bin). Skip it so the outbound
+        // traffic matches GO4. (The wire is also guarded by duml.minimalUnlockMode.)
+        if (MINIMAL_UNLOCK_EXPERIMENT) { android.util.Log.i("Mavic2Auth", "auth sender SKIPPED (GO4-parity experiment)"); return }
         authJob?.cancel()
         authJob = viewModelScope.launch {
             android.util.Log.i("Mavic2Auth", "auth frame sender started at connection time (1 Hz)")
@@ -2183,7 +2224,10 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     // the same so a returning pilot isn't silently re-capped at 30 m. Gated to fire once so it
     // can't fight a deliberate re-enable from the Device screen mid-session. `autoDisableBeginner`
     // lets a genuine beginner keep the cap by turning this off.
-    var autoDisableBeginner = true
+    // Default off during the GO4-parity experiment so the on-connect beginner/limit writes and the
+    // 8 s re-assert watchdog never run at the source (the wire is also guarded by
+    // duml.minimalUnlockMode). Restore to plain `true` when the experiment ends.
+    var autoDisableBeginner = !MINIMAL_UNLOCK_EXPERIMENT
     @Volatile private var beginnerAutoSent = false
     // Last value from a real 0xf8 READ of the novice param (status 0 only), NOT the 0xf9 write-echo,
     // which just parrots back the byte we sent and would falsely "confirm" a write the FC rejected.
