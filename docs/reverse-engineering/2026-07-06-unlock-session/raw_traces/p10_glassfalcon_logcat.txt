@@ -1,0 +1,901 @@
+--------- beginning of main
+07-06 11:13:07.713 I/GF_NOVICE( 8616): auto-disable loop start
+07-06 11:13:07.714 I/GF_FLYC ( 8616): flycState=0x01 gpsUsed=false sig=0 startFail=0x00(ok)
+07-06 11:13:07.714 I/GF_MAXALT( 8616): auto-raise start (target 1000m)
+07-06 11:13:07.714 I/GF_MAXRADIUS( 8616): auto-raise start (target 8000m)
+07-06 11:13:07.714 I/GF_LIMITS( 8616): expert-default: disabling height/radius limit flags on link-up
+07-06 11:13:08.107 I/GF_NOVICE( 8616): WRITE-echo ack status=0 value=00
+07-06 11:13:08.122 I/GF_NOVICE( 8616): try 0: sent write+read, lastRead=null
+07-06 11:13:08.135 I/GF_MAXALT( 8616): try 0: sent write+read, lastRead=null
+07-06 11:13:08.135 I/GF_MAXRADIUS( 8616): try 0: sent write+read, lastRead=null
+07-06 11:13:08.142 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061100, -106.810002
+07-06 11:13:08.348 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:08.348 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:08.349 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:08.349 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:08.366 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:08.366 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:08.644 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061102, -106.810004
+07-06 11:13:08.683 I/GF_LIMITS( 8616): hash=0x5ac75bcd status=0 bytes=0a u16=-1
+07-06 11:13:09.144 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061102, -106.810004
+07-06 11:13:09.443 I/GF_LIMITS( 8616): hash=0x5aae5bcd status=0 bytes=0a u16=-1
+07-06 11:13:09.646 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061105, -106.810007
+07-06 11:13:09.723 I/GF_NOVICE( 8616): confirmed OFF after 1 tries
+07-06 11:13:09.740 I/GF_MAXRADIUS( 8616): confirmed 8000m after 1 tries
+07-06 11:13:10.140 I/GF_MAXALT( 8616): try 1: sent write+read, lastRead=500
+07-06 11:13:10.146 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061105, -106.810007
+07-06 11:13:10.212 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:10.212 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:10.651 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061106, -106.810008
+07-06 11:13:11.157 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061106, -106.810008
+07-06 11:13:11.658 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810010
+07-06 11:13:12.154 I/GF_MAXALT( 8616): try 2: sent write+read, lastRead=500
+07-06 11:13:12.158 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:13:12.185 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:12.186 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:12.658 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061107, -106.810011
+07-06 11:13:12.804 I/GF_FLYC ( 8616): flycState=0x01 gpsUsed=false sig=0 startFail=0x00(ok)
+07-06 11:13:13.180 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061107, -106.810011
+07-06 11:13:13.681 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061107, -106.810012
+07-06 11:13:14.155 I/GF_MAXALT( 8616): try 3: sent write+read, lastRead=500
+07-06 11:13:14.181 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061107, -106.810012
+07-06 11:13:14.202 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:14.202 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:14.681 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:15.182 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:15.702 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:15.945 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:13:15.946 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:15.946 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:15.962 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:15.962 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:15.963 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:13:15.983 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:15.983 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:16.155 I/GF_MAXALT( 8616): try 4: sent write+read, lastRead=500
+07-06 11:13:16.214 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:16.216 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:16.216 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:16.714 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:16.925 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:16.925 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:17.214 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:17.714 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:17.815 I/GF_FLYC ( 8616): flycState=0x01 gpsUsed=false sig=0 startFail=0x00(ok)
+07-06 11:13:18.157 I/GF_MAXALT( 8616): try 5: sent write+read, lastRead=500
+07-06 11:13:18.187 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:18.187 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:18.215 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:18.715 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:19.215 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:19.721 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:20.157 I/GF_MAXALT( 8616): try 6: sent write+read, lastRead=500
+07-06 11:13:20.188 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:20.188 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:20.223 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:20.723 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061108, -106.810012
+07-06 11:13:21.243 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061109, -106.810013
+07-06 11:13:21.744 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061109, -106.810013
+07-06 11:13:22.159 I/GF_MAXALT( 8616): try 7: sent write+read, lastRead=500
+07-06 11:13:22.202 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:22.202 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:22.249 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061109, -106.810013
+07-06 11:13:22.757 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061109, -106.810013
+07-06 11:13:22.917 I/GF_FLYC ( 8616): flycState=0x01 gpsUsed=false sig=0 startFail=0x00(ok)
+07-06 11:13:23.267 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061109, -106.810013
+07-06 11:13:23.772 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061109, -106.810013
+07-06 11:13:24.160 I/GF_MAXALT( 8616): try 8: sent write+read, lastRead=500
+07-06 11:13:24.202 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:24.203 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:24.273 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:24.542 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:13:24.543 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:24.543 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:24.607 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:24.607 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:24.610 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:13:24.611 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:24.611 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:24.774 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:25.274 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:25.563 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:25.563 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:25.774 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:26.162 I/GF_MAXALT( 8616): try 9: sent write+read, lastRead=500
+07-06 11:13:26.214 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:26.215 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:26.275 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:26.776 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:27.276 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:27.777 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:28.014 I/GF_FLYC ( 8616): flycState=0x01 gpsUsed=false sig=0 startFail=0x00(ok)
+07-06 11:13:28.163 I/GF_MAXALT( 8616): try 10: sent write+read, lastRead=500
+07-06 11:13:28.215 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:28.215 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:28.294 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:28.795 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:29.298 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:29.799 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:30.165 I/GF_MAXALT( 8616): try 11: sent write+read, lastRead=500
+07-06 11:13:30.204 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:30.204 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:30.300 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:30.800 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:31.300 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:31.809 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:32.166 I/GF_MAXALT( 8616): try 12: sent write+read, lastRead=500
+07-06 11:13:32.202 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:32.202 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:32.309 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:32.810 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:33.127 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=false sig=0 startFail=0x00(ok)
+07-06 11:13:33.145 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:13:33.162 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:33.162 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:33.163 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:33.163 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:33.188 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:13:33.203 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:33.203 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:33.310 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:33.811 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:34.153 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:34.153 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:34.167 I/GF_MAXALT( 8616): try 13: sent write+read, lastRead=500
+07-06 11:13:34.213 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:34.213 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:34.311 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:34.811 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:35.312 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:35.814 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:36.167 I/GF_MAXALT( 8616): try 14: sent write+read, lastRead=500
+07-06 11:13:36.203 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:36.203 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:36.315 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:36.816 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:37.317 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:37.820 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:38.168 I/GF_MAXALT( 8616): try 15: sent write+read, lastRead=500
+07-06 11:13:38.214 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=3 startFail=0x00(ok)
+07-06 11:13:38.236 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:38.236 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:38.328 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:38.836 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:39.345 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:39.846 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810012
+07-06 11:13:40.169 I/GF_MAXALT( 8616): try 16: sent write+read, lastRead=500
+07-06 11:13:40.215 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:40.215 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:40.362 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810013
+07-06 11:13:40.862 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061110, -106.810013
+07-06 11:13:41.363 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:41.763 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:13:41.787 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:41.787 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:41.788 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:41.788 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:41.803 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:13:41.833 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:41.833 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:41.864 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:42.169 I/GF_MAXALT( 8616): try 17: sent write+read, lastRead=500
+07-06 11:13:42.220 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:42.220 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:42.364 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:42.766 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:42.766 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:42.865 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:43.216 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:13:43.365 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:43.869 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:44.171 I/GF_MAXALT( 8616): try 18: sent write+read, lastRead=500
+07-06 11:13:44.215 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:44.215 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:44.369 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:44.869 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:45.369 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:45.869 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:46.178 I/GF_MAXALT( 8616): try 19: sent write+read, lastRead=500
+07-06 11:13:46.240 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:46.240 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:46.389 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:46.895 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:47.395 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:47.896 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:48.179 I/GF_MAXALT( 8616): try 20: sent write+read, lastRead=500
+07-06 11:13:48.219 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:13:48.233 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:48.233 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:48.397 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:48.908 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:49.412 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:49.914 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:50.194 I/GF_MAXALT( 8616): try 21: sent write+read, lastRead=500
+07-06 11:13:50.224 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:50.224 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:50.363 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:13:50.382 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:50.382 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:50.383 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:50.384 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:50.402 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:13:50.417 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:50.443 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:50.443 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:50.917 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:51.365 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:51.366 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:51.418 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:51.919 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:52.196 I/GF_MAXALT( 8616): try 22: sent write+read, lastRead=500
+07-06 11:13:52.223 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:52.223 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:52.420 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:52.920 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:53.316 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:13:53.421 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:53.922 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:54.196 I/GF_MAXALT( 8616): try 23: sent write+read, lastRead=500
+07-06 11:13:54.228 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:54.228 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:54.423 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:54.930 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:55.432 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:55.935 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:56.210 I/GF_MAXALT( 8616): try 24: sent write+read, lastRead=500
+07-06 11:13:56.255 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:56.255 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:56.435 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:56.935 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:57.436 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:57.937 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:58.216 I/GF_MAXALT( 8616): try 25: sent write+read, lastRead=500
+07-06 11:13:58.243 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:58.243 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:58.316 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:13:58.441 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:58.947 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:58.963 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:13:58.982 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:58.982 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:13:58.983 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:13:58.983 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:13:59.018 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:13:59.042 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:13:59.042 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:13:59.448 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:59.949 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:13:59.968 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:13:59.970 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:00.218 I/GF_MAXALT( 8616): try 26: sent write+read, lastRead=500
+07-06 11:14:00.263 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:00.263 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:00.450 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:00.960 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:01.466 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:01.966 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:02.229 I/GF_MAXALT( 8616): try 27: sent write+read, lastRead=500
+07-06 11:14:02.265 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:02.265 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:02.467 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:02.967 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:03.317 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:03.480 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:03.981 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810013
+07-06 11:14:04.237 I/GF_MAXALT( 8616): try 28: sent write+read, lastRead=500
+07-06 11:14:04.265 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:04.265 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:04.482 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:04.982 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:05.482 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:05.985 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:06.238 I/GF_MAXALT( 8616): try 29: sent write+read, lastRead=500
+07-06 11:14:06.262 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:06.262 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:06.486 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:06.988 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:07.489 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:07.579 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:07.625 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:07.625 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:07.642 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:07.642 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:07.643 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:07.664 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:07.664 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:07.838 I/GF_MAXALT( 8616): settled at FC ceiling 500m (clamped below 1000)
+07-06 11:14:07.989 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:08.415 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:08.491 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:08.586 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:08.586 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:08.991 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:09.503 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:10.003 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:10.505 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:11.005 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:11.506 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:12.006 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:14:12.506 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:13.007 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:13.421 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:13.508 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:14.009 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:14.509 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:15.009 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:15.520 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:16.021 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:16.163 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:16.185 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:16.185 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:16.186 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:16.186 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:16.203 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:16.225 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:16.225 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:16.522 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:17.023 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:17.184 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:17.184 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:17.524 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:18.025 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:18.521 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:18.526 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:19.026 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:19.527 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:20.027 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:20.528 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:21.029 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:21.538 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:22.038 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:22.540 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:23.041 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:23.541 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:23.619 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:24.041 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:24.542 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:24.802 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:24.803 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:24.803 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:24.804 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:24.804 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:24.822 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:24.844 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:24.844 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:25.043 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:25.544 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:25.789 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:25.789 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:26.045 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:26.546 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:27.046 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:27.558 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:28.059 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:28.560 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:28.707 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:29.061 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:29.561 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:30.062 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:30.563 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:31.076 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:31.577 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:32.078 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:14:32.579 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:33.080 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:33.384 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:33.404 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:33.404 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:33.406 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:33.406 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:33.420 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:33.445 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:33.445 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:33.589 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:33.740 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:34.090 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:34.384 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:34.384 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:34.591 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:35.092 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:35.593 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:36.094 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:36.594 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:37.098 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:37.599 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:38.099 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:38.600 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:38.807 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:39.101 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:39.608 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:40.111 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:40.612 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:41.112 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:41.613 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:42.003 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:42.010 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:42.010 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:42.011 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:42.012 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:42.022 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:42.044 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:42.044 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:42.114 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:42.615 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:42.989 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:42.989 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:43.115 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:43.615 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:43.910 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:44.116 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:44.617 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:45.117 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:45.623 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:46.128 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:46.629 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:47.131 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:47.631 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:48.132 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:48.632 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:49.013 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:49.133 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:49.634 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:50.134 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:50.583 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:50.603 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:50.603 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:50.604 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:50.605 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:50.623 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:50.634 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:50.643 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:50.643 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:51.135 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:51.614 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:51.614 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:51.649 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:52.150 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:14:52.659 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:53.164 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:53.674 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:54.018 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:54.205 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:54.706 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:55.212 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061111, -106.810014
+07-06 11:14:55.712 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061112, -106.810016
+07-06 11:14:56.216 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061112, -106.810016
+07-06 11:14:56.750 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061114, -106.810018
+07-06 11:14:57.261 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810020
+07-06 11:14:57.761 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810020
+07-06 11:14:58.265 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810020
+07-06 11:14:58.765 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810020
+07-06 11:14:59.124 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:14:59.204 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:14:59.207 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:14:59.207 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:14:59.230 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:14:59.230 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:14:59.231 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:14:59.252 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:14:59.252 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:14:59.270 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:14:59.771 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:00.188 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:00.188 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:00.276 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:00.781 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:01.282 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:01.783 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:02.283 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:02.784 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:03.285 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:03.786 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810021
+07-06 11:15:04.225 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:15:04.287 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810022
+07-06 11:15:04.788 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810022
+07-06 11:15:05.289 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810022
+07-06 11:15:05.789 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810022
+07-06 11:15:06.289 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810022
+07-06 11:15:06.789 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061116, -106.810022
+07-06 11:15:07.290 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810022
+07-06 11:15:07.791 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810022
+07-06 11:15:07.803 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:07.827 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:07.827 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:07.828 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:07.828 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:07.843 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:07.936 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:07.936 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:08.291 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:08.792 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:08.813 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:08.814 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:09.226 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:15:09.293 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:09.794 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:10.294 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:10.795 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:11.300 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:11.801 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:12.302 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:12.802 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:13.302 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:13.803 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:14.304 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:14.325 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:15:14.805 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:15.305 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:15.805 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:16.306 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:16.453 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:16.455 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:16.455 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:16.465 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:16.465 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:16.466 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:16.477 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:16.477 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:16.818 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:17.318 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:17.409 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:17.409 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:17.818 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:18.318 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:18.825 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:19.325 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:19.413 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:15:19.827 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:20.328 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:20.828 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:21.328 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:21.828 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:22.329 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:22.831 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:23.336 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:23.842 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:24.342 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:24.423 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:15:24.851 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:25.043 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:25.066 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:25.066 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:25.067 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:25.067 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:25.068 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:25.118 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:25.118 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:25.353 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:25.853 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:26.055 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:26.055 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:26.367 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:26.871 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:27.372 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:27.873 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:28.378 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:28.880 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061117, -106.810023
+07-06 11:15:29.383 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061118, -106.810022
+07-06 11:15:29.533 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:15:29.888 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061118, -106.810022
+07-06 11:15:30.389 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061119, -106.810020
+07-06 11:15:30.889 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061119, -106.810020
+07-06 11:15:31.390 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061120, -106.810020
+07-06 11:15:31.891 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061120, -106.810020
+07-06 11:15:32.397 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061120, -106.810020
+07-06 11:15:32.898 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061120, -106.810020
+07-06 11:15:33.398 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:33.623 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:33.624 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:33.624 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:33.644 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:33.644 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:33.646 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:33.666 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:33.666 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:33.898 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:34.399 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:34.629 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:34.629 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:34.634 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:15:34.921 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:35.422 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:35.922 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:36.422 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:36.923 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:37.423 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:37.925 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:38.426 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:38.927 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:39.428 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:39.715 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:15:39.928 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:40.428 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:40.940 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061123, -106.810020
+07-06 11:15:41.443 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:41.943 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:42.224 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:42.247 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:42.247 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:42.248 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:42.248 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:42.249 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:42.285 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:42.286 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:42.444 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:42.944 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:43.216 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:43.216 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:43.445 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:43.949 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:44.450 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:44.722 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:15:44.952 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:45.457 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:45.964 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:46.465 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:46.966 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:47.467 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:47.968 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:48.468 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:48.968 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:49.469 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:49.834 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:15:49.977 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:50.478 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:50.826 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:50.827 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:50.827 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:50.878 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:50.878 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:50.880 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:50.884 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:50.884 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:50.979 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:51.479 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:51.836 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:51.836 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:51.979 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:15:52.480 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:52.987 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:53.493 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:53.994 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:54.494 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:54.918 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:15:54.995 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:55.510 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:56.011 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:56.511 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:57.011 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:57.511 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:58.028 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:58.535 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:59.036 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:15:59.444 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:15:59.444 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:15:59.444 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:15:59.463 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:15:59.463 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:15:59.464 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:15:59.484 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:15:59.484 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:15:59.538 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:00.017 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:00.049 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:00.426 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:00.426 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:00.558 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:01.063 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:01.570 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:02.070 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:02.570 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:03.077 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:03.578 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:04.078 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:04.580 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:05.038 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:05.080 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:05.580 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:06.082 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:06.582 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:07.083 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:07.584 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:08.044 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:08.067 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:08.067 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:08.069 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:08.069 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:08.083 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:08.084 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:08.123 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:08.123 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:08.585 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:09.061 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:09.061 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:09.095 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:09.595 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:10.095 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:10.129 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:10.595 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:11.099 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:11.616 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:12.120 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:16:12.620 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:13.121 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:13.621 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:14.121 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:14.621 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:15.122 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:15.216 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:15.622 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:16.122 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:16.622 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:16.644 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:16.665 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:16.665 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:16.666 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:16.666 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:16.683 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:16.703 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:16.703 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:17.122 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:17.627 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:17.646 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:17.646 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:18.133 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:18.634 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:19.135 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810020
+07-06 11:16:19.635 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:20.135 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:20.220 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:20.637 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:21.137 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:21.637 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:22.138 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:22.638 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:23.138 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:23.652 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:24.153 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:24.654 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:25.154 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:25.224 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:25.244 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:25.298 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:25.298 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:25.320 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:25.321 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:25.346 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:25.348 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:25.348 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:25.655 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:26.159 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:26.243 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:26.243 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:26.660 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:27.161 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:27.665 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:28.166 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:28.666 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:29.167 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:29.667 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:30.169 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:30.315 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:30.669 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:31.170 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:31.671 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:32.171 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.062109, -106.809901
+07-06 11:16:32.673 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:33.173 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:33.673 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:33.869 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:33.894 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:33.894 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:33.895 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:33.895 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:33.897 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:33.909 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:33.909 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:34.173 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:34.673 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:34.865 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:34.865 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:35.175 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:35.429 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=5 startFail=0x00(ok)
+07-06 11:16:35.676 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:36.176 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:36.676 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:37.176 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:37.677 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:38.178 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:38.684 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:39.184 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:39.688 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:40.188 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810021
+07-06 11:16:40.519 I/GF_FLYC ( 8616): flycState=0x21 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:16:40.689 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:41.198 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:41.702 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:42.202 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:42.484 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:42.485 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:42.485 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:42.508 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:42.508 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:42.511 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:42.554 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:42.554 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:42.703 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:43.203 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:43.450 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:43.450 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:43.754 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:44.256 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:44.756 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:45.256 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:45.617 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:16:45.757 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061124, -106.810022
+07-06 11:16:46.257 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810022
+07-06 11:16:46.758 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810022
+07-06 11:16:47.259 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810022
+07-06 11:16:47.759 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810022
+07-06 11:16:48.260 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:48.760 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:49.261 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:49.776 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:50.276 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:50.705 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:16:50.778 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:51.067 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:51.070 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:51.070 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:51.083 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:51.083 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:51.084 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:51.102 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:51.103 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:51.278 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:51.779 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:52.055 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:52.055 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:52.279 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:52.779 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:53.279 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:53.780 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:54.280 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:54.781 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:55.282 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:55.715 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:16:55.783 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:56.288 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:56.806 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:57.306 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:57.809 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:58.310 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:58.811 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:59.312 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:16:59.664 I/GF_LIMITS( 8616): hash=0x7ece6d19 status=0 bytes=00 u16=-1
+07-06 11:16:59.666 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:16:59.666 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:16:59.685 I/GF_LIMITS( 8616): hash=0x425c0a94 status=0 bytes=401f u16=8000
+07-06 11:16:59.685 I/GF_MAXRADIUS( 8616): READ max_radius = 8000m
+07-06 11:16:59.685 I/GF_LIMITS( 8616): hash=0x0438298a status=0 bytes=1400 u16=20
+07-06 11:16:59.706 I/GF_LIMITS( 8616): hash=0xde9b1b7b status=0 bytes=00 u16=-1
+07-06 11:16:59.706 I/GF_NOVICE( 8616): READ ack status=0 value=00
+07-06 11:16:59.812 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:00.316 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:00.666 I/GF_LIMITS( 8616): hash=0x0371238a status=0 bytes=f401 u16=500
+07-06 11:17:00.666 I/GF_MAXALT( 8616): READ max_height = 500m
+07-06 11:17:00.726 I/GF_FLYC ( 8616): flycState=0x06 gpsUsed=true sig=4 startFail=0x00(ok)
+07-06 11:17:00.817 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:01.318 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:01.840 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:02.340 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:02.860 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:03.361 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:03.864 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:04.365 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:04.866 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:05.381 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:05.881 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:06.382 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:06.882 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023
+07-06 11:17:07.382 I/GF_SENDGPS( 8616): sent Send-GPS-to-Flyc (phone) 35.061127, -106.810023

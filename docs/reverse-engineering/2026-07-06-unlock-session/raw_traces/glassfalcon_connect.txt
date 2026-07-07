@@ -1,0 +1,7 @@
+ assfalcon.debug-9442    [006] ...11 252493.051545: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
+ assfalcon.debug-9442    [006] ...11 252493.051742: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
+ assfalcon.debug-9442    [006] ...11 252493.052928: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
+ assfalcon.debug-9442    [005] ...11 252493.083949: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
+ assfalcon.debug-9442    [005] ...11 252493.087123: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
+ assfalcon.debug-9442    [008] ...11 252493.112494: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
+ assfalcon.debug-9442    [008] ...11 252493.113407: bpf_trace_printk: LOOKUP_PREFILTER: b4000071a7e2bc70 dev.glassfalcon.debug
