@@ -69,8 +69,8 @@ Porting a model means identifying its module IDs and telemetry layout, adding th
 | **Telemetry** | Full attitude, velocity, and GPS table |
 | **Mission** | Grid/orbit mission builder with map preview, optional AI natural-language planning, battery-per-leg estimate |
 | **Offload / Gallery** | Pull media over WiFi (drone AP) or ADB; on-phone gallery with select, share, filter, and sort |
-| **AI Co-pilot** | Voice push-to-talk plus proactive callouts. Runs on on-device **Gemini Nano**, cloud **Gemini**, or a **Hybrid** mode where Nano routes commands and Gemini writes the answers. Fed live telemetry and weather. |
-| **Voice** | Per-category mutable spoken callouts, on-demand full status read-out, voice and speed picker |
+| **AI Co-pilot** | Voice push-to-talk plus proactive callouts. Five modes: Off, Rule-Based (fixed callouts only), AI Assisted (on-device Nano), Gemini Cloud (full cloud model), or Hybrid (Nano for instant command recognition, Gemini for rich conversational answers). Fed live telemetry and weather. |
+| **Voice** | Push-to-talk to the co-pilot, plus 11 categorized spoken callouts the pilot mutes individually: Take-off/landing, GPS status, home point, battery/low/critical, wind/weather, obstacles, motor/sensors, link/signal, command confirmations, airspace warnings, other alerts. On-demand full status read-out. Adjustable voice quality (on-device preferred), speech rate, and pitch. |
 | **Device** | Ping/version/serial inquiry, FC info, per-module reboot, raw DUML hex console, FC tuning (sport boost, wind resistance), expert flight-limit controls |
 | **Firmware** | Aircraft and RC firmware version display |
 | **Plugins** | Optional add-on features with per-device enable, including the **encrypted live-stream** plugin |
@@ -78,6 +78,45 @@ Porting a model means identifying its module IDs and telemetry layout, adding th
 **Plugins** are an in-app extension point for features not every pilot wants shipped on. The first is an end-to-end-encrypted re-streamer: it AES-256-GCM-encrypts each H.264 frame on the phone and relays it to a blind server that only ever sees ciphertext, viewable from an ephemeral link that burns itself when the stream ends. The server spec and a reference watch page are in [`plugins/encrypted-stream/`](plugins/encrypted-stream/). See [`plugins/`](plugins/) for how plugins are structured.
 
 Settings screens open without a drone connected, the same way DJI GO 4 lets you review camera settings before a drone is linked. Individual controls still need a live link to reach the drone.
+
+### AI Co-pilot: Four operating modes
+
+The co-pilot runs in one of five modes, selectable in **Settings → Local & LLM** without a connected drone:
+
+| Mode | Model | Latency | Cost | Status |
+|---|---|---|---|:--:|
+| **Off** | None | none | none | ✅ |
+| **Rule-Based** | Fixed callouts (flight events, battery, GPS, wind, obstacles) | instant | free | ✅ |
+| **AI Assisted** | On-device Gemini Nano via ML Kit GenAI | instant (local), no network | free | 🧪 requires Tensor-class device (Pixel 8+, etc.) |
+| **Gemini Cloud** | Google's `gemini-2.5-pro` model | 2–8 seconds per request | paid (free tier available at aistudio.google.com) | 🧪 |
+| **Hybrid** | Nano for commands, Gemini for answers | instant for "return home" / "take a photo"; 2–8 s for chat | paid if Nano unavailable | 🧪 requires both Nano and Gemini key |
+
+**Hybrid mode mechanics:** When you ask the co-pilot a question, the app first checks if on-device Nano is available and sends your question to it. If Nano recognizes a **command** (RETURN_HOME, TAKE_PHOTO, TOGGLE_RECORD, TOGGLE_LANDING_LIGHT, ZOOM_IN, ZOOM_OUT, CENTER_GIMBAL, or STATUS_REPORT), it fires immediately with zero network latency. If Nano is unavailable or doesn't match a command, the app routes your question to Gemini Cloud for a richer, more conversational answer. If Gemini is also unavailable, Nano's own text response (if any) is spoken instead. This lets a pilot execute time-critical commands ("return home") instantly on the local chip while still getting articulate answers for weather or flight-planning questions.
+
+**API keys:** Stored only in the device's private SharedPreferences, never baked into the APK, and never sent to GlassFalcon servers (there are none). Each pilot enters their own keys once in Settings; the app is inert without them.
+
+- **Gemini:** Free tier at [aistudio.google.com](https://aistudio.google.com). Pilot's own key is required for Gemini Cloud or Hybrid mode.
+- **Weather:** Optional. Windy.com Point Forecast API for wind/temperature at the pilot's GPS position, fed to all co-pilot modes as context. Enables the HUD's wind/gust pill and co-pilot weather awareness. Pilot's own key at [windy.com/api](https://windy.com/api).
+
+### Voice callouts: 11 categories, mutable per-category
+
+All spoken announcements (co-pilot answers, flight events, warnings) flow through one of 11 categories, each independently mute-able in **Settings → Voice**. The pilot hears only the categories they want:
+
+| Category | Examples | Default |
+|---|---|:--:|
+| Take-off & landing | "Taking off", "Landed" | on |
+| GPS status | "GPS ready", "GPS signal lost" | on |
+| Home point | "Home point recorded" | on |
+| Battery | "Low battery", "Critical battery, land now" | on |
+| Wind & weather | "Wind 12 knots gusting 18", "Rain in forecast" | on |
+| Obstacles | "Obstacle ahead", "Obstacle 30 meters to the rear" | **off** |
+| Motor & sensors | "ESC error", "Barometer fault", "IMU warming up" | on |
+| Link & signal | "RC signal lost", "Drone signal lost" | on |
+| Command confirmations | "Return to home", "Landing" (when you issue them) | on |
+| Airspace | "Entering controlled airspace", "Restricted zone 2 km ahead" | **off** |
+| Other warnings | Flight-controller-flagged alerts not in other categories | on |
+
+The pilot picks voice quality (on-device English voices preferred over network-dependent ones), speech rate (0.6×–1.8×, default 1.05×), and pitch (0.6–1.6, default 1.0). A preview button plays a sample in the current voice before flying.
 
 ### Connection modes
 
@@ -102,7 +141,7 @@ Legend: ✅ **Confirmed** (verified against real hardware) · ⚠️ **Unconfirm
 | Auto-land trigger | `0x03/0x2a` | ⚠️ | Command is sent; the payload value that lands is unconfirmed. Manual stick landing works. |
 | Return-to-Home | `0x03` | ✅ | |
 | Beginner mode off | `0x03/0xf9` hash `0xde9b1b7b`=0 | ✅ | Captured off GO 4. Clears the beginner 30 m cap; the one limit write worth making. |
-| 30 m cap: how it lifts | `0x11/0x43` handshake | ✅ | The aircraft has a hard firmware limit that is unlocked by a continuous DUML `0x11` (HMS) authentication handshake. The phone must send repeating `0x11/0x43` frames (~1 Hz) with a device-specific 16-byte token + per-frame signature. Without this handshake, the FC permanently locks to 30m. See [0x11 Handshake Discovery](docs/2026-07-06-0x11-handshake-discovery.md). |
+| 30 m cap: how it lifts | `0x11/0x43` handshake | ⚠️ | Frame structure + device-token values captured (2026-07-06); RSA-SHA256 signing pending. The aircraft enforces a hard firmware limit unlocked only by continuous `0x11/0x43` auth frames (~1 Hz) bearing a device-specific token + per-frame RSA-SHA256 signature. Without this handshake, the FC locks to 30m at arming. See [0x11 Handshake Discovery](docs/2026-07-06-0x11-handshake-discovery.md). |
 | Set Home Point | `0x03/0x31` | ❌ | **Re-locks the 30 m cap on wm240; never send it** (live-confirmed). The aircraft records its own home. |
 | Send mobile GPS to FC | `0x03/0x20` | ✅ | Streams the phone's position for dynamic-home / follow-me. This is **not** what lifts the 30 m cap; the earlier claim that it was is a false-confirm. |
 | Get Home Point | `0x03/0x44` | ✅ | Read-only; response is home lon/lat as radian doubles plus the FC serial |
@@ -125,7 +164,7 @@ Legend: ✅ **Confirmed** (verified against real hardware) · ⚠️ **Unconfirm
 ### Non-obvious hardware behaviors
 
 - A full aircraft internal storage ("eMMC full") drops the aircraft into a limited flight envelope on its own. Formatting internal storage in DJI GO 4's settings clears it. Many test flights can fill it.
-- **The 30 m hard limit is unlocked by a physical-device authentication handshake** (`cmd_set 0x11`, HMS frame `0x11/0x43`). The app must send repeating 84-byte auth frames containing a device-specific static token + per-frame RSA-SHA256 signature. Without this handshake running, the FC refuses to arm beyond 30m, regardless of beginner-mode, GPS, or any parameter write. This is a firmware-level physical-device gate, not a software policy. GlassFalcon v0.2.39+ implements RSA-SHA256 frame generation. See [0x11 Handshake Discovery](docs/2026-07-06-0x11-handshake-discovery.md) for the frame structure and protocol details.
+- **The 30 m hard limit is unlocked by a physical-device authentication handshake** (`cmd_set 0x11`, HMS frame `0x11/0x43`). The app must send repeating 84-byte auth frames (~1 Hz) containing a device-specific 16-byte static token + per-frame RSA-SHA256 signature. Without this handshake, the FC refuses to arm beyond 30m, regardless of beginner-mode, GPS, or any parameter write. This is firmware-level, not a software policy. **Status: Frame structure and token values captured (2026-07-06 wide probe); RSA-SHA256 signing implementation is pending.** See [0x11 Handshake Discovery](docs/2026-07-06-0x11-handshake-discovery.md) for the frame layout and device-token values.
 - The RC240-to-phone link is USB Accessory (AOA), not host-CDC/RNDIS. The aircraft-direct path (CDC-ACM `/dev/ttyACM0`) is a separate bench link.
 
 ### Feature test status
@@ -143,8 +182,10 @@ Legend: ✅ **Confirmed** (verified against real hardware) · ⚠️ **Unconfirm
 | Obstacle radar, data | ✅ |
 | Obstacle radar, directionality centering (new) | 🧪 |
 | Map and FAA airspace overlays | ✅ |
-| AI co-pilot, Nano push-to-talk | ✅ |
-| AI co-pilot, cloud Gemini / Hybrid | 🧪 |
+| AI co-pilot, Rule-Based (fixed callouts) | ✅ |
+| AI co-pilot, on-device Nano (push-to-talk, instant commands) | 🧪 (code built; hardware validation pending on Tensor-class device) |
+| AI co-pilot, cloud Gemini | 🧪 (code built; live flight validation pending) |
+| AI co-pilot, Hybrid mode (Nano + Gemini) | 🧪 (code built; live validation pending) |
 | Voice callouts (basic) | ✅ |
 | Tunable per-category callouts and status read-out | 🧪 |
 | Voice and speed picker | 🧪 |
@@ -223,6 +264,23 @@ echo "DJI_APP_KEY=your_key_here" >> android/local.properties
 ```
 
 The release build ships one ABI (`arm64-v8a`) and does not run on x86 emulators. Add `"x86_64"` to `abiFilters` in `app/build.gradle.kts` if you want emulator builds. R8/minify is off because this AGP's R8 cannot parse Kotlin 2.2 metadata yet; the release APK is signed but not shrunk.
+
+---
+
+## Settings and API Keys
+
+All configuration happens in the **Settings** screens, which open even without a connected drone. API keys are stored only on the device in Android SharedPreferences, never in source code or the APK.
+
+| Feature | Setting | Provider | Cost | Requires |
+|---|---|---|---|---|
+| **Gemini Cloud copilot** | Settings → Local & LLM | aistudio.google.com | Free tier available | User's own API key |
+| **Gemini model** | (automatic) | Google AI Studio | — | `gemini-2.5-pro` |
+| **Weather (wind/temperature)** | Settings → Local & LLM | windy.com/api | Free tier available | User's own API key (optional) |
+| **On-device Gemini Nano** | (automatic detection) | ML Kit GenAI | Free | Tensor-class device (Pixel 8+, etc.) |
+| **Voice announcements** | Settings → Voice | Android TextToSpeech | Free | — |
+| **RC button mapping** | Settings → Controller Buttons | (local) | Free | — |
+
+**No server-side dependency.** GlassFalcon has no backend server, cloud account, or service subscription. The only external calls are to Gemini (if enabled) and Windy (if weather key is set).
 
 ---
 
@@ -1537,14 +1595,32 @@ No analytics, no crash reporting, no phone-home. Every outbound connection maps 
 
 ---
 
-## Known Limitations
+## Known Limitations and Unimplemented Features
+
+### Critical (blocks building/flying)
+
+- **0x11/0x43 authentication frame generation.** The code references `Mavic2Auth.generateFrame()` (FlightViewModel.kt:1955, 1968) but the class does not exist. The device-specific token and frame structure are captured and documented in [`docs/2026-07-06-0x11-handshake-discovery.md`](docs/2026-07-06-0x11-handshake-discovery.md), but RSA-SHA256 signing key extraction is pending. This blocks the 30m altitude/radius cap lift.
+
+### Partial implementations
+
+- **FTP media offload.** The app detects whether FTP is available on the aircraft's SD card (port 21 probe works), but actual directory listing and file download are not implemented. ADB offload is the working path today.
+- **RC battery telemetry.** Frames are received and logged (cmd_set 0x06/0x57) but not decoded; byte layout is unconfirmed. Likewise, battery cell voltage (cmd_set 0x0d) is logged but not parsed.
+- **DroneMediaRepository interface.** Documented as a future seam for direct aircraft SD card browsing over the live RC link; intentionally not stubbed because three candidate transports (DUML file opcodes, legacy FTP, USB mass storage) are unconfirmed on wm240.
+
+### Unconfirmed commands (confirmed working on DJI GO 4, not yet on GlassFalcon)
 
 - The auto-land button sends a real DUML command (`0x03/0x2a`), but the payload value that triggers landing on wm240 is unconfirmed (auto-takeoff's value `0x01` is confirmed). Manual stick landing works today.
+- Waypoint missions are cataloged (opcodes `0x24`–`0x27`) but not yet flight-tested.
+
+### Partial hardware support
+
 - The lateral obstacle channels (C/D) only populate in low-speed ActiveTrack, so their left/right assignment is not independently confirmed. Front/rear distance is confirmed. The wm240's front/rear sensors have no left/right sub-resolution within an arc; the second beam per direction is unused hardware.
-- Waypoint missions are cataloged but not yet flight-tested.
+
+### Coverage gaps
+
 - OpenAIP (the global airspace baseline) is not yet integrated. Only FAA US airspace layers are live.
 
-Contributions on any of these are welcome.
+Contributions filling any of these are welcome. The 0x11/0x43 signing key extraction is the highest priority blocker.
 
 ---
 
