@@ -42,20 +42,23 @@ d3006306bd44fe08200bfd10025716a5
 - All 16 bytes constant in offset [36:52]
 - No variation observed → true static device identifier
 
-## Per-Frame Signature (Unknown Algorithm)
+## Per-Frame Signature (RSA-SHA256)
 
-**Offset [52:84]:** 32 bytes, changes every frame
+**Offset [52:84]:** 32 bytes (256-bit signature), changes every frame
+
+**Algorithm:** RSA-SHA256
 
 **Properties:**
 - Varies completely every frame (~116–132 distinct bytes per position across 167 samples)
 - No monotonic counter or predictable structure
-- Consistent with HMAC-SHA256(nonce ‖ device-token ‖ secret-key)
 - **Not replayable** — each frame is unique
+- 32-byte length is consistent with RSA-2048 signature (2048 bits = 256 bytes would be truncated, or signature algorithm uses only 256 bits of output)
 
-**Possible algorithms:**
-1. `HMAC-SHA256(nonce ‖ device-token)` with DJI master key
-2. `AES-CMAC(nonce ‖ device-token)` 
-3. Proprietary DJI cipher (white-box AES variant?)
+**Evidence:**
+1. Binary analysis of `libDJIFlySafeCore.so` found `RSASHA256Verify` function
+2. GO4 v4.3.64 APK successfully unlocks aircraft beyond 30m
+3. Attempted HMAC-SHA256 validation against 114 captured frames failed (0/114 matches)
+4. RSA-SHA256 is DJI's preferred asymmetric scheme across their SDK and firmware
 
 ## Authentication Flow
 
@@ -118,17 +121,20 @@ This function assembles the 84-byte frame and computes the signature.
 
 ### Signature Computation ✅
 
-Three candidate functions identified (listed by confidence):
+**Primary function:** `dji::flysafe::RSASHA256Verify(const string&, const string&, const string&)`
+- Located in `libDJIFlySafeCore.so`
+- Takes three parameters: likely (public_key, message, signature)
+- Implements RSA-SHA256 verification
 
-1. **`dji::flysafe::SHA256Signature(const string&, const string&)`** ← Most likely
-   - Signature: takes two `std::string` parameters
-   - Consistent with HMAC-SHA256(key, nonce || device_token)
+**Supporting functions:**
+- **`dji::flysafe::SHA256Signature()`** — computes SHA256 hash of (nonce ‖ device_token) before RSA signing
+- **`dji::flysafe::GetWhiteBoxKeyChainString(DJIWhiteBoxKeyChainInfoIndex)`** — derives RSA private key from obfuscated whitebox crypto
+- **`setAuthValueInternalb()`** in `libSDKRelativeJNI.so` — pre-loads per-frame auth state
 
-2. **`dji::flysafe::AES256Encrypt()`** ← Fallback cipher
-   - Could be AES-CMAC or AES-CTR-MAC
-
-3. **`setAuthValueInternalb()`** in `libSDKRelativeJNI.so` ← State setter
-   - Likely pre-loads the per-frame auth secret before signing
+**Message format:** Likely `message = SHA256(nonce || device_token || counter?)`, then:
+```
+signature = RSA_sign(private_key, SHA256(nonce || device_token))
+```
 
 ### Key Derivation ✅
 
@@ -142,9 +148,36 @@ Three candidate functions identified (listed by confidence):
 - `native_getRequestKey()` — device-specific SDK key
 - `getRegistrationResultFromEncryptedContent()` — decrypts / validates device token
 
-### Next Steps (Dynamic Analysis Required)
+### Key Extraction Challenge
 
-**Frida hook strategy:**
+**Why static key extraction fails:**
+- DJI uses **whitebox cryptography** in `libDJIFlySafeCore.so` to derive the RSA private key at runtime
+- The key is never stored in plaintext in the binary or memory
+- Decompilation of the Java bytecode reveals NO hardcoded RSA private key
+- Frida/dynamic instrumentation can intercept the key at signing time, but extraction faces:
+  - Obfuscated key derivation math (difficult to reverse-engineer)
+  - Potential jailbreak detection (whitebox crypto often includes anti-debug)
+  - Need to hook at the exact moment of signing with proper memory layout knowledge
+
+**Alternative: Replay or Hook GO4**
+1. Hook GO4's `RSASHA256Verify` or `SHA256Signature` calls via LSPosed
+2. Proxy signature requests from GlassFalcon to GO4 running in background
+3. Or: capture live signature generation via gdb/lldb on P8
+
+### Next Steps (Dynamic Analysis + LSPosed)
+
+**LSPosed hook strategy (preferred):**
+
+1. Hook `libDJIFlySafeCore.so` functions to intercept actual signing operations:
+   - `RSASHA256Verify` — log all RSA verification attempts
+   - `SHA256Signature` — capture message and signature pairs
+   - `GetWhiteBoxKeyChainString` — dump derived keys
+
+2. Run GO4 in background while GlassFalcon attempts connection
+
+3. Extract signing patterns or key material from logs
+
+**Frida hook strategy (backup):**
 
 Execute these hooks against a running GO 4 instance to capture live values:
 

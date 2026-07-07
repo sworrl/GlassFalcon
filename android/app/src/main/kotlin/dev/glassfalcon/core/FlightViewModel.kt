@@ -83,6 +83,7 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     override val drone    get() = decoder.drone
     val gimbal   get() = decoder.gimbal
     val obstacle get() = decoder.obstacle
+    override val airSense get() = decoder.airSense
     val cameraState get() = decoder.camera
     val rcButtonHistory get() = decoder.rcButtonHistory
     val deviceInfoRaw get() = decoder.deviceInfoRaw
@@ -312,6 +313,7 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     private val _flightTimer = MutableStateFlow("00:00")
     val flightTimer: StateFlow<String> = _flightTimer
     private var timerJob: Job? = null
+    private var authJob: Job? = null
     private var armMs = 0L
 
     // ── Map state (lat,lon pairs; kept map-library-agnostic) ──────────────────
@@ -606,8 +608,16 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
                 // on stale (possibly garbage) data, not reflecting the FC's real current state.
                 if (now - lastOsdSizeLogMs > 5000) {
                     lastOsdSizeLogMs = now
+                    val dv = decoder.drone.value
                     android.util.Log.i("GF_OSD", "cmd 0x43 len=%d flags(used)=0x%08x".format(
-                        frame.payload.size, decoder.drone.value.flags))
+                        frame.payload.size, dv.flags))
+                    // Kid-mode diagnosis: the FC never reports the ENFORCED ceiling, but flycState
+                    // (Atti vs GPS_Atti) and startFailReason (0x0a "Novice without GPS", 0x17
+                    // "restricted area") expose WHY it may still be clamping to 30 m even when the
+                    // param table reads permissive (the params say what the FC will ACCEPT, not what
+                    // it enforces). Logged so a live flight capture shows the real cause.
+                    android.util.Log.i("GF_FLYC", "flycState=0x%02x gpsUsed=%b sig=%d startFail=0x%02x(%s)".format(
+                        dv.flycState, dv.gpsUsed, dv.gpsSignalLevel, dv.startFailReason, dv.startFailText ?: "ok"))
                 }
             }
             // Diagnostic for camera work-mode set: does the camera even ACK this command at
@@ -881,6 +891,15 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
                 if (d.batteryReqLand) w += "🔋 FC REQUIRING LANDING (low battery)"
                 // Tentative wind/attitude warning (undocumented bit 0x200, seen in windy flight).
                 if (d.inAir && d.windAngleWarnMaybe) w += "🌬 STRONG WIND / HIGH ANGLE"
+                // AirSense (ADS-B / UAT IN): manned aircraft nearby. Receive-only — the FC pushes a
+                // 0x11/0x08 warning frame when it flags traffic. Per-target byte layout isn't decoded
+                // yet, so this fires on the FC's own warning signal (AirSenseState.maxWarningLevel,
+                // floored to 1 on any warning frame). Staleness-gated so a stale frame doesn't stick.
+                // Appending to `w` gives both the HUD chip and the edge-triggered voice callout.
+                decoder.airSense.value.let { air ->
+                    if (air.maxWarningLevel >= 1 && (now - air.lastFrameMs) < 10_000)
+                        w += "✈ AIR TRAFFIC NEARBY — AirSense"
+                }
                 // (No "home not set" warning: the aircraft records its OWN home automatically. Us
                 // sending an explicit setHomePoint (0x03/0x31) actually RE-LOCKS the 30 m cap, 
                 // live-confirmed 2026-07-05, so we never set it and never warn about it.)
@@ -1351,6 +1370,7 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
                 _app.value = _app.value.copy(connected = true)
                 log("Connected via TCP")
                 ensureCaptureStarted()
+                startAuthFrameSender()
             } else {
                 log("TCP connection failed")
             }
@@ -1366,6 +1386,7 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
             log("USB connected, DUML channel open")
             ensureCaptureStarted()
             startLinkWatchdog("USB host")
+            startAuthFrameSender()
         } else {
             log("USB: no CDC bulk endpoints found on $name")
         }
@@ -1401,6 +1422,7 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
             log("AOA connected, 55cc DUML channel open")
             ensureCaptureStarted()
             startLinkWatchdog("AOA")
+            startAuthFrameSender()
         } else {
             log("AOA: failed to open accessory $name")
         }
@@ -1441,11 +1463,50 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
         log("Preview mode, no hardware attached")
     }
 
+    // ── Dev: synthetic AirSense radar preview ─────────────────────────────────
+    // Seeds a few fake ADS-B/UAT targets around the best-known position so the map radar layer +
+    // warning-colour steps can be iterated without live traffic (which the drone won't hear indoors,
+    // sideways next to a fan). Toggle again to clear. Pure UI seed — never touches the aircraft.
+    private var airSensePreviewOn = false
+    fun toggleAirSenseRadarPreview(): Boolean {
+        airSensePreviewOn = !airSensePreviewOn
+        if (!airSensePreviewOn) {
+            decoder.setAirSenseForPreview(AirSenseState())
+            log("AirSense radar preview OFF")
+            return false
+        }
+        val d = decoder.drone.value
+        val base = when {
+            d.hasGpsFix && d.lat != 0.0 -> d.lat to d.lon
+            _homePoint.value != null    -> _homePoint.value!!
+            _phoneLoc.value != null     -> _phoneLoc.value!!.first to _phoneLoc.value!!.second
+            else                        -> 35.1929 to -106.3574   // demo fallback (matches capture)
+        }
+        val cosLat = Math.cos(Math.toRadians(base.first)).coerceAtLeast(0.01)
+        fun at(dNorthKm: Double, dEastKm: Double) =
+            (base.first + dNorthKm / 111.0) to (base.second + dEastKm / (111.0 * cosLat))
+        val (t1Lat, t1Lon) = at(1.2, 0.6)
+        val (t2Lat, t2Lon) = at(-0.8, 1.1)
+        val (t3Lat, t3Lon) = at(0.3, -0.9)
+        val targets = listOf(
+            AirSenseTarget("A1B2C3", t1Lat, t1Lon, altM = 900, headingDeg = 210, relAltM = 300, distanceM = 1400, warningLevel = 1, valid = true),
+            AirSenseTarget("D4E5F6", t2Lat, t2Lon, altM = 600, headingDeg = 95,  relAltM = 120, distanceM = 1200, warningLevel = 2, valid = true),
+            AirSenseTarget("778899", t3Lat, t3Lon, altM = 300, headingDeg = 10,  relAltM = -40, distanceM = 700,  warningLevel = 3, valid = true),
+        )
+        decoder.setAirSenseForPreview(
+            AirSenseState(targets, maxWarningLevel = 3, lastFrameMs = System.currentTimeMillis(),
+                lastRawHex = "(synthetic preview)", active = true))
+        log("AirSense radar preview ON — 3 synthetic targets")
+        return true
+    }
+
     fun disconnect() {
         stopVirtualRc()
         mission.abort()
         activeTrack.stop()
         tapFly.stop()
+        timerJob?.cancel(); timerJob = null
+        stopAuthFrameSender()
         duml.disconnect()
         beginnerAutoSent = false
         maxHeightRaised = false
@@ -1848,7 +1909,24 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
     fun autoTakeoff()     { duml.send(FlyC.autoTakeoff()); duml.sendRc(Rc.pushBuzzer()); log("Auto take-off commanded") }
     fun autoLand()        { duml.send(FlyC.autoLand()); duml.sendRc(Rc.pushBuzzer()); log("Auto landing commanded"); voice.announce(AnnounceCategory.COMMANDS, "Landing", urgent = true) }
     fun emergencyStop()   { mission.abort(); duml.send(FlyC.emergencyStop()); log("EMERGENCY STOP") }
+    fun startAuthFrameSender() {
+        authJob?.cancel()
+        authJob = viewModelScope.launch {
+            android.util.Log.i("Mavic2Auth", "auth frame sender started at connection time (1 Hz)")
+            while (isActive) {
+                sendMavic2AuthFrame()
+                delay(1000)
+            }
+        }
+    }
+
+    fun stopAuthFrameSender() {
+        authJob?.cancel()
+        authJob = null
+    }
+
     fun motorArm() {
+        android.util.Log.i("FlightViewModel", "motorArm() called")
         duml.send(FlyC.motorCtrl(true))
         armMs = System.currentTimeMillis()
         timerJob?.cancel()
@@ -1866,6 +1944,35 @@ class FlightViewModel : ViewModel(), dev.glassfalcon.ui.screens.MapTelemetrySour
         timerJob?.cancel(); timerJob = null
         log("Motor DISARM")
     }
+
+    /**
+     * Send Mavic 2 firmware authentication frame (0x11/0x43).
+     * Lifts the 30m altitude cap when sent at ~1 Hz during armed flight.
+     * Frame payload: nonce (32) || device_token (16) || HMAC-SHA256(key, nonce||token) (32).
+     */
+    private fun sendMavic2AuthFrame() {
+        try {
+            val frame = Mavic2Auth.generateFrame()
+            android.util.Log.i("Mavic2Auth", "sending 0x11/0x43 frame (${frame.size} bytes)")
+            duml.send(DumlConnection.FC, 0x11, 0x43, frame)
+            log("Mavic2Auth: sent 0x11/0x43 frame (${frame.size} bytes)")
+        } catch (e: Exception) {
+            android.util.Log.e("Mavic2Auth", "ERROR: ${e.message}")
+            log("Mavic2Auth ERROR: ${e.message}")
+        }
+    }
+
+    /** Manual test: send a single 0x11/0x43 authentication frame immediately. */
+    fun testMavic2AuthFrame() {
+        try {
+            val frame = Mavic2Auth.generateFrame()
+            duml.send(DumlConnection.FC, 0x11, 0x43, frame)
+            log("Mavic2Auth TEST: sent 0x11/0x43 frame (${frame.size} bytes)")
+        } catch (e: Exception) {
+            log("Mavic2Auth TEST ERROR: ${e.message}")
+        }
+    }
+
     // (No setHomePoint wrapper: sending FlyC.setHomePoint / 0x03/0x31 re-locks the 30 m cap on the
     // wm240, the aircraft self-records home. Kept out of the app entirely so nothing can call it.)
     fun setFailsafe(a: Int) { duml.send(FlyC.setRcLostAction(a)); log("Failsafe → ${listOf("Hover","Land","GoHome")[a]}") }

@@ -182,6 +182,8 @@ private class RecordMapSource(record: FlightRecord) : MapTelemetrySource {
     override val track = MutableStateFlow(record.track)
     override val homePoint = MutableStateFlow(record.track.firstOrNull()?.let { it.lat to it.lon })
     override val lastKnown = MutableStateFlow(last?.let { it.lat to it.lon })
+    // Recorded flights don't carry AirSense traffic yet; empty flow satisfies the map source.
+    override val airSense = MutableStateFlow(dev.glassfalcon.core.AirSenseState())
 }
 
 private val DjiCyan = Color(0xFF33CCFF)

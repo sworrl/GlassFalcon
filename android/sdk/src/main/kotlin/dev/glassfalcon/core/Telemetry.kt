@@ -204,6 +204,47 @@ data class ObstacleState(
 }
 
 /**
+ * One AirSense (ADS-B / UAT IN) traffic target the aircraft's receiver reported to the app over
+ * DUML cmd_set 0x11 ("ADSB"). AirSense is receive-ONLY: the drone hears manned aircraft on
+ * 1090ES / 978 UAT and pushes them up so the pilot can stay clear. The drone does NOT transmit
+ * ADS-B, so this never shows the drone itself.
+ *
+ * ⚠️ FIELD LAYOUT UNCONFIRMED. The o-gs dissector's ADSB_UART_CMD_DISSECT table is empty and we
+ * have no live capture with real traffic yet (needs an outdoor flight near manned aircraft, or a
+ * DJI `.DAT` flight log). So [TelemetryDecoder.decodeADS_BItem] currently returns nothing
+ * and the map radar is driven by [TelemetryDecoder.setAirSenseForPreview] synthetic targets; every
+ * real 0x11 frame is logged raw (GF_ADSB) so the offsets can be reversed the moment traffic is
+ * seen. Same raw-hex-until-confirmed approach as [RcButtonRaw] / [DeviceInfoRaw]. Field set mirrors
+ * DJI MSDK's AirSenseAirplaneState (public API, not app code): position, altitude, heading,
+ * relative altitude, distance, and a 0..4 warning level.
+ */
+data class AirSenseTarget(
+    val icao: String = "",        // ICAO 24-bit address / flight code, hex, when decoded
+    val lat: Double = 0.0,
+    val lon: Double = 0.0,
+    val altM: Int = 0,            // target barometric/GPS altitude, metres
+    val headingDeg: Int = 0,      // target ground track, degrees true
+    val relAltM: Int = 0,         // target altitude relative to the drone (+ = above)
+    val distanceM: Int = 0,       // slant/horizontal distance to the drone, metres
+    val warningLevel: Int = 0,    // 0 = none .. 4 = most urgent (MSDK AirSenseWarningLevel)
+    val valid: Boolean = false,
+)
+
+/** Snapshot of AirSense state: the current target list plus the loudest warning and the raw hex
+ *  of the last 0x11 frame (for the reverse-engineering panel). [active] is true once any 0x11
+ *  frame has been seen this link, so the UI can distinguish "AirSense present but quiet" from
+ *  "no AirSense hardware / not licensed on this airframe". [isWarningActive] reflects whether
+ *  there is currently a non-zero threat level from any target or explicit warning frame. */
+data class AirSenseState(
+    val targets: List<AirSenseTarget> = emptyList(),
+    val maxWarningLevel: Int = 0,
+    val isWarningActive: Boolean = false,
+    val lastFrameMs: Long = 0L,
+    val lastRawHex: String = "",
+    val active: Boolean = false,
+)
+
+/**
  * Raw payload of the RC's "Custom Buttons Status" push (cmd_set=0x06, cmd_id=0x4c or 0x51, 
  * dji-dumlv1-proto.lua RC_UART_CMD_TEXT names them "RC Pro Custom Buttons Status Get/Push" and
  * "RC Push To Glass" respectively, no byte-level dissector for either). UNCONFIRMED which byte
@@ -224,26 +265,157 @@ data class RcButtonRaw(val cmdId: Int = 0, val hex: String = "", val changedAtMs
  *  parser for a format nobody's confirmed would not be. */
 data class DeviceInfoRaw(val label: String, val hex: String, val receivedAtMs: Long)
 
+/**
+ * OSD Home Point Data (cmd_set=0x03, cmd_id=0x42), ~2 Hz broadcast.
+ * Contains home location, return-to-home status, and limit flags.
+ * Layout: 34 bytes (new firmware).
+ *
+ * Byte Layout:
+ *   0-7:   Home Longitude (f64 LE, radians) → convert to degrees
+ *   8-15:  Home Latitude (f64 LE, radians) → convert to degrees
+ *   16-19: Home Altitude (f32 LE, meters)
+ *   20-21: Home State Flags (u16 LE, bitfield)
+ *   22-23: Go-Home Height (u16 LE, meters)
+ *
+ * Home State Flags (offset 20-21):
+ *   0x01: home_point_set
+ *   0x02: go_home_mode (RTH active)
+ *   0x10: reach_limit_distance
+ *   0x20: reach_limit_height
+ *   0x800: beginner_mode
+ */
+data class HomeData(
+    val lat: Double = 0.0,
+    val lon: Double = 0.0,
+    val altM: Float = 0f,
+    val homePointSet: Boolean = false,
+    val goHomeMode: Boolean = false,
+    val goHomeHeight: Int = 0,
+    val beginnerMode: Boolean = false,
+    val atDistLimit: Boolean = false,
+    val atHeightLimit: Boolean = false,
+    val valid: Boolean = false,
+)
+
+/**
+ * RC (Remote Controller) Battery Status (cmd_set=0x06, cmd_id=0x57), ~2 Hz broadcast.
+ * Controller battery: percentage and voltage.
+ *
+ * Byte Layout (TBD from live capture):
+ *   - Battery percentage (%)
+ *   - Battery voltage (mV)
+ *   - Battery current (mA, optional)
+ */
+data class RCBatteryData(
+    val batteryPercent: Int = 0,
+    val batteryMv: Int = 0,
+    val batteryCurrent: Int = 0,
+    val valid: Boolean = false,
+)
+
+/**
+ * RC GPS Location (cmd_set=0x06, cmd_id=0x57), ~2 Hz broadcast.
+ * Remote controller GPS position and signal quality.
+ *
+ * Byte Layout (TBD from live capture):
+ *   - RC GPS latitude/longitude (degrees)
+ *   - GPS satellite count
+ *   - Accuracy (meters)
+ */
+data class RCLocationData(
+    val lat: Double = 0.0,
+    val lon: Double = 0.0,
+    val gpsSats: Int = 0,
+    val accuracy: Float = 0f,
+    val valid: Boolean = false,
+)
+
+/**
+ * Flight Limit State (cmd_set=0x03, cmd_id=0xXX), ~2 Hz broadcast.
+ * Current altitude and distance ceiling limits.
+ *
+ * Byte Layout (TBD from firmware analysis):
+ *   - Current height limit (meters)
+ *   - Current distance limit (meters)
+ *   - Height limit reason
+ *   - Distance limit reason
+ */
+data class FlightLimitData(
+    val heightLimit: Int = 0,
+    val distanceLimit: Int = 0,
+    val heightLimitReason: String = "",
+    val distanceLimitReason: String = "",
+    val valid: Boolean = false,
+)
+
+/**
+ * Smart Battery Cell Voltages (cmd_set=0x0d, cmd_id=0xXX), ~2 Hz broadcast.
+ * Individual cell voltage readings for battery health monitoring.
+ *
+ * Byte Layout (TBD from live capture):
+ *   - Cell count
+ *   - Individual cell voltages (mV)
+ *   - Min/max cell voltage
+ */
+data class BatteryCellData(
+    val cellCount: Int = 0,
+    val cellVoltages: List<Float> = emptyList(),
+    val minCellV: Float = 0f,
+    val maxCellV: Float = 0f,
+    val valid: Boolean = false,
+)
+
+/**
+ * RC Custom Button State (cmd_set=0x06, cmd_id=0x4c or 0x51).
+ * Decoded button press state (currently captured as raw hex via RcButtonRaw).
+ * Byte mapping and layout unconfirmed.
+ */
+data class RCButtonState(
+    val c1Pressed: Boolean = false,
+    val c2Pressed: Boolean = false,
+    val shutterHalf: Boolean = false,
+    val shutterFull: Boolean = false,
+    val recordToggle: Boolean = false,
+    val dialValue: Int = 0,
+    val valid: Boolean = false,
+)
+
 class TelemetryDecoder {
     private val _drone    = MutableStateFlow(DroneState())
     private val _gimbal   = MutableStateFlow(GimbalState())
     private val _obstacle = MutableStateFlow(ObstacleState())
+    private val _airSense = MutableStateFlow(AirSenseState())
     private val _camera   = MutableStateFlow(CameraState())
     // Short history (not just the latest value) so a press-and-watch session shows a clean
     // before/after diff instead of one value flickering in place, much easier to correlate
     // "I just pressed C1" with "this byte changed" when they're on screen at the same time.
     private val _rcButtonHistory = MutableStateFlow<List<RcButtonRaw>>(emptyList())
     private val _deviceInfoRaw = MutableStateFlow<Map<String, DeviceInfoRaw>>(emptyMap())
+    private val _homeData = MutableStateFlow(HomeData())
+    private val _rcBattery = MutableStateFlow(RCBatteryData())
+    private val _rcLocation = MutableStateFlow(RCLocationData())
+    private val _flightLimits = MutableStateFlow(FlightLimitData())
+    private val _batteryCells = MutableStateFlow(BatteryCellData())
+    private val _rcButtonState = MutableStateFlow(RCButtonState())
 
     val drone:    StateFlow<DroneState>    = _drone
     val gimbal:   StateFlow<GimbalState>   = _gimbal
     val obstacle: StateFlow<ObstacleState> = _obstacle
+    val airSense: StateFlow<AirSenseState> = _airSense
     /** Inject an obstacle reading directly, used by the hardware-free HUD Preview so the radar
      *  and its warning-color bleed are visible/tunable without a real aircraft in range. */
     fun setObstacleForPreview(o: ObstacleState) { _obstacle.value = o }
+    /** Push a synthetic AirSense snapshot for radar UI iteration without live traffic. */
+    fun setAirSenseForPreview(s: AirSenseState) { _airSense.value = s }
     val camera:   StateFlow<CameraState>   = _camera
     val rcButtonHistory: StateFlow<List<RcButtonRaw>> = _rcButtonHistory
     val deviceInfoRaw: StateFlow<Map<String, DeviceInfoRaw>> = _deviceInfoRaw
+    val homeData: StateFlow<HomeData> = _homeData
+    val rcBattery: StateFlow<RCBatteryData> = _rcBattery
+    val rcLocation: StateFlow<RCLocationData> = _rcLocation
+    val flightLimits: StateFlow<FlightLimitData> = _flightLimits
+    val batteryCells: StateFlow<BatteryCellData> = _batteryCells
+    val rcButtonState: StateFlow<RCButtonState> = _rcButtonState
 
     // TEMP incoming-frame logger (remove after decode): logs each frame whose payload CHANGES, so
     // an event-driven frame like a strong-wind / excessive-angle warning stands out when it
@@ -426,6 +598,49 @@ class TelemetryDecoder {
                     _rcButtonHistory.value = (_rcButtonHistory.value + RcButtonRaw(frame.cmdId, hex, System.currentTimeMillis())).takeLast(20)
                 }
             }
+            frame.cmdSet == 0x03 && frame.cmdId == 0x42 && frame.payload.size >= 22 -> {
+                // OSD Home Point Data (cmd_set=0x03, cmd_id=0x42), ~2 Hz broadcast.
+                // Contains home location, RTH status, and limit flags.
+                // Byte layout: 0-7(lon), 8-15(lat), 16-19(alt), 20-21(flags), 22-23(go-home height)
+                val bb = ByteBuffer.wrap(frame.payload).order(ByteOrder.LITTLE_ENDIAN)
+                val lonRad = bb.getDouble(0)
+                val latRad = bb.getDouble(8)
+                val altM = if (frame.payload.size >= 20) bb.getFloat(16) else 0f
+                val flags = if (frame.payload.size >= 22) bb.getShort(20).toInt() and 0xffff else 0
+                val goHomeHeight = if (frame.payload.size >= 24) bb.getShort(22).toInt() and 0xffff else 0
+                _homeData.value = HomeData(
+                    lat = Math.toDegrees(latRad),
+                    lon = Math.toDegrees(lonRad),
+                    altM = if (altM.isFinite()) altM else 0f,
+                    homePointSet = (flags and 0x01) != 0,
+                    goHomeMode = (flags and 0x02) != 0,
+                    goHomeHeight = goHomeHeight,
+                    beginnerMode = (flags and 0x800) != 0,
+                    atDistLimit = (flags and 0x10) != 0,
+                    atHeightLimit = (flags and 0x20) != 0,
+                    valid = true,
+                )
+            }
+            frame.cmdSet == 0x06 && frame.cmdId == 0x57 && frame.payload.isNotEmpty() -> {
+                // RC Battery and GPS Location (cmd_set=0x06, cmd_id=0x57), ~2 Hz broadcast.
+                // Exact byte layout TBD from live capture; placeholder handler captures the frame
+                // for reverse-engineering. Both battery % and GPS may be in this frame or separate.
+                android.util.Log.i("GF_RC_STATUS", "0x06/0x57 len=%d %s".format(
+                    frame.payload.size,
+                    frame.payload.joinToString(" ") { "%02x".format(it) }
+                ))
+                // TODO: Decode battery percent, voltage, and GPS location once byte layout confirmed
+            }
+            frame.cmdSet == 0x0d && frame.cmdId != 0x02 && frame.payload.isNotEmpty() -> {
+                // Battery Cell Voltage Data (cmd_set=0x0d, cmd_id=0xXX), ~2 Hz broadcast.
+                // Exact cmd_id and byte layout TBD from firmware analysis or live capture.
+                // Placeholder logs the frame for reverse-engineering.
+                android.util.Log.i("GF_BATT_CELLS", "0x0d/0x%02x len=%d".format(
+                    frame.cmdId,
+                    frame.payload.size
+                ))
+                // TODO: Decode individual cell voltages once byte layout confirmed
+            }
             // ── Device/firmware-info query ACKs (see DeviceInfoRaw's doc comment, raw hex
             // only, no confirmed byte layout to parse a version string from). Gated on
             // frame.isAck, unlike the PUSH-type cases above: these are direct request/response
@@ -436,6 +651,28 @@ class TelemetryDecoder {
             // already claimed above for the smart-battery percentage PUSH, and without a
             // confirmed way to tell the two apart on the wire, capturing it would risk
             // misattributing one as the other. ──
+            // ── AirSense (ADS-B / UAT IN) traffic. cmd_set 0x11: 0x02 Push Data (target list),
+            // 0x08 Push Warning, 0x09 Push Original. Receive-only — see AirSenseTarget's doc.
+            // Every frame is logged raw so the (currently unknown) target byte layout can be
+            // reversed from a live outdoor capture; the mere arrival of a 0x08 Push Warning is a
+            // real "traffic flagged by the FC" signal we surface even before decoding it. ──
+            frame.cmdSet == 0x11 && frame.cmdId in intArrayOf(0x02, 0x08, 0x09) -> {
+                val hex = frame.payload.joinToString(" ") { "%02x".format(it) }
+                android.util.Log.i("GF_ADSB", "0x11/0x%02x len=%d %s".format(frame.cmdId, frame.payload.size, hex))
+                val decoded = if (frame.cmdId != 0x08) decodeADS_BItem(frame.payload)
+                              else _airSense.value.targets
+                // Push Warning with no decodable level still means "traffic warning" → floor at 1.
+                val warnFromFrame = if (frame.cmdId == 0x08) maxOf(1, decodeADS_BWarning(frame.payload)) else 0
+                val maxWarn = maxOf(warnFromFrame, decoded.maxOfOrNull { it.warningLevel } ?: 0)
+                _airSense.value = AirSenseState(
+                    targets = decoded,
+                    maxWarningLevel = maxWarn,
+                    isWarningActive = maxWarn > 0,
+                    lastFrameMs = System.currentTimeMillis(),
+                    lastRawHex = hex,
+                    active = true,
+                )
+            }
             frame.cmdSet == 0x00 && frame.cmdId == 0x01 && frame.isAck ->
                 captureDeviceInfo("Version Inquiry", frame)
             frame.cmdSet == 0x00 && frame.cmdId == 0x51 && frame.isAck ->
@@ -449,4 +686,46 @@ class TelemetryDecoder {
         val hex = frame.payload.joinToString(" ") { "%02x".format(it) }
         _deviceInfoRaw.value = _deviceInfoRaw.value + (label to DeviceInfoRaw(label, hex, System.currentTimeMillis()))
     }
+
+    /**
+     * Decode ADS-B aircraft list from cmd_set=0x11, cmd_id=0x02 (GetPushData) or 0x09 (GetPushOriginal).
+     *
+     * Expected fields per target (from DJI JADX decompilation DataADSBGetPushData):
+     * - ICAOAddress: 24-bit hex string (e.g., "A00001")
+     * - callsign: 8-character ASCII
+     * - latitude: WGS-84 decimal degrees (double)
+     * - longitude: WGS-84 decimal degrees (double)
+     * - altitude: barometric or GNSS altitude in meters (float)
+     * - heading: ground track 0-359 degrees (float)
+     * - hSpeed: horizontal speed m/s (float)
+     * - vSpeed: vertical speed m/s (float, positive = climb)
+     * - NIC: Navigation Integrity Category 0-11 (int)
+     * - NACP: Navigation Accuracy Category - Position (int)
+     *
+     * ⚠️ BYTE LAYOUT UNCONFIRMED. The exact wire format is unknown (no live traffic capture yet).
+     * Raw frames are logged at GF_ADSB tag; dissector can be filled in from a real outdoor flight
+     * or DJI flight log capture. Returns empty for now; when implementing, gate on plausible lat/lon
+     * (±90°) so a mis-parsed record never places a phantom aircraft.
+     */
+    private fun decodeADS_BItem(@Suppress("UNUSED_PARAMETER") payload: ByteArray): List<AirSenseTarget> =
+        emptyList()
+
+    /**
+     * Decode ADS-B collision warning from cmd_set=0x11, cmd_id=0x08 (GetPushWarning).
+     *
+     * Expected fields per DJI JADX decompilation DataADSBGetPushWarning:
+     * - warningType: DJIWarningType enum (0=None, 1..4=warning levels, 100=OTHER)
+     * - list: Array of FlightItem (threatening aircraft)
+     *   - ICAOAddress, latitude, longitude, altitude, heading, speed
+     *   - distance: meters to threat
+     *   - remainTime: seconds until conflict
+     *   - warningLevel: individual threat severity
+     *
+     * Returns the system-wide warning level (0..4). Most urgent level wins.
+     *
+     * ⚠️ BYTE LAYOUT UNCONFIRMED. Wire format unknown (no live traffic capture yet).
+     * Returns 0 for now; caller floors frame arrival at level 1 regardless, so warning path still
+     * fires. Dissector can be refined from a real outdoor flight or DJI flight log.
+     */
+    private fun decodeADS_BWarning(@Suppress("UNUSED_PARAMETER") payload: ByteArray): Int = 0
 }

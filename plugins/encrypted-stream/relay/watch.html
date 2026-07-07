@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Falcon Technix — Drone Live</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #111827; --surface: #1f2937; --text: #f9fafb; --muted: #9ca3af;
+    --border: #374151; --cyan: #22d3ee; --green: #4ade80; --pink: #ec4899; --yellow: #fbbf24;
+  }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; overflow: hidden; }
+  #wrap { position: fixed; inset: 0; display: grid; place-items: center; background:
+    radial-gradient(1200px 600px at 50% -10%, #1f293766, transparent); }
+  canvas { max-width: 100vw; max-height: 100vh; background: #000;
+    box-shadow: 0 0 80px rgba(34,211,238,.08), 0 0 24px rgba(0,0,0,.7); }
+
+  #chrome { position: fixed; inset: 0; pointer-events: none; transition: opacity .4s; }
+  #chrome.hidden { opacity: 0; }
+
+  header { position: absolute; top: 0; left: 0; right: 0; padding: 12px 16px;
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+    background: linear-gradient(#111827e6, transparent); }
+  .wordmark { font-weight: 800; letter-spacing: .14em; font-size: 13px; }
+  .wordmark .fx { color: var(--cyan); }
+  .sep { color: var(--border); }
+  #pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px;
+    border: 1px solid var(--border); border-radius: 999px; background: #1f2937cc;
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--muted); }
+  #dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  #pill.live { color: var(--green); border-color: #4ade8055; }
+  #pill.live #dot { background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 1.6s infinite; }
+  #pill.err { color: var(--pink); border-color: #ec489955; }
+  #pill.err #dot { background: var(--pink); }
+  @keyframes pulse { 50% { opacity: .45; } }
+
+  #hud { position: absolute; top: 12px; right: 16px; display: flex; gap: 8px; font-size: 11px; }
+  .stat { background: #1f2937cc; border: 1px solid var(--border); border-radius: 8px;
+    padding: 4px 9px; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .stat b { color: var(--text); font-weight: 600; }
+
+  footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px 16px;
+    display: flex; justify-content: center; gap: 10px;
+    background: linear-gradient(transparent, #111827e6); }
+  button { pointer-events: auto; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600;
+    color: var(--text); background: #1f2937e6; border: 1px solid var(--border);
+    border-radius: 10px; padding: 8px 14px; letter-spacing: .04em; }
+  button:hover { border-color: var(--cyan); color: var(--cyan); }
+
+  #msg { position: fixed; inset: 0; display: grid; place-items: center; text-align: center;
+    padding: 24px; font-size: 15px; line-height: 1.6; background: #111827f2; }
+  #msg .box { max-width: 420px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px 32px; }
+  #msg h2 { margin: 0 0 8px; font-size: 16px; letter-spacing: .1em; }
+  #msg .dim { color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div id="wrap"><canvas id="v" width="16" height="9"></canvas></div>
+
+  <div id="chrome">
+    <header>
+      <span class="wordmark">FALCON<span class="fx">TECHNIX</span></span>
+      <span class="sep">▸</span>
+      <span style="color:var(--muted);letter-spacing:.1em;font-size:11px;font-weight:700">DRONE LIVE</span>
+      <span id="pill"><span id="dot"></span><span id="txt">CONNECTING</span></span>
+      <div id="hud" style="margin-left:auto">
+        <span class="stat"><b id="res">—</b></span>
+        <span class="stat"><b id="fps">0</b> fps</span>
+        <span class="stat"><b id="mbps">0.0</b> Mb/s</span>
+        <span class="stat"><b id="clock">00:00</b></span>
+      </div>
+    </header>
+    <footer>
+      <button id="btnSnap" title="Save a PNG frame">⭳ Snapshot</button>
+      <button id="btnFs" title="Fullscreen (double-click video works too)">⛶ Fullscreen</button>
+    </footer>
+  </div>
+
+  <div id="msg" hidden><div class="box" id="msgBox"></div></div>
+
+<script>
+// Falcon Technix drone viewer — GlassFalcon encrypted-stream client.
+// AES-256-GCM ciphertext arrives over WebSocket; the key rides ONLY in this
+// page's #fragment (never sent to the server); WebCodecs decodes to canvas.
+// The relay is blind — everything private happens right here.
+(async () => {
+  const $ = (id) => document.getElementById(id);
+  const pill = $('pill'), txt = $('txt'), chrome = $('chrome');
+  const canvas = $('v'), ctx2d = canvas.getContext('2d');
+  const setStatus = (t, cls) => { txt.textContent = t; pill.className = cls || ''; };
+  const fatal = (title, sub) => {
+    $('msgBox').innerHTML = `<h2>${title}</h2><div class="dim">${sub || ''}</div>`;
+    $('msg').hidden = false; setStatus('ENDED', 'err');
+  };
+
+  if (!('VideoDecoder' in window)) {
+    return fatal('WebCodecs not supported',
+      'Open this link in a recent Chrome, Edge, or Chromium-based browser.');
+  }
+
+  // ── streamId (path) + viewer token (?t=) + key (#k=, never sent to server) ──
+  const parts = location.pathname.split('/').filter(Boolean);
+  const streamId = parts[parts.length - 1];
+  const token = new URLSearchParams(location.search).get('t') || '';
+  const keyB64 = new URLSearchParams(location.hash.slice(1)).get('k') || '';
+  if (!streamId || !token || !keyB64) return fatal('Invalid link', 'This link is incomplete or has expired.');
+
+  const b64urlToBytes = (s) => {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    const bin = atob(s), b = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    return b;
+  };
+  let key;
+  try {
+    key = await crypto.subtle.importKey('raw', b64urlToBytes(keyB64), 'AES-GCM', false, ['decrypt']);
+  } catch { return fatal('Invalid key', 'The decryption key in this link is malformed.'); }
+
+  // ── HUD ──
+  let frames = 0, bytes = 0, t0 = 0;
+  setInterval(() => {
+    $('fps').textContent = frames; $('mbps').textContent = (bytes * 8 / 1e6).toFixed(1);
+    frames = 0; bytes = 0;
+    if (t0) {
+      const s = Math.floor((Date.now() - t0) / 1000);
+      $('clock').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    }
+  }, 1000);
+
+  // ── decoder → canvas ──
+  let configured = false, gotKey = false, codec = '';
+  const decoder = new VideoDecoder({
+    output: (f) => {
+      if (canvas.width !== f.displayWidth || canvas.height !== f.displayHeight) {
+        canvas.width = f.displayWidth; canvas.height = f.displayHeight;
+        $('res').textContent = `${f.displayWidth}×${f.displayHeight}`;
+      }
+      ctx2d.drawImage(f, 0, 0, canvas.width, canvas.height);
+      f.close(); frames++;
+    },
+    error: () => setStatus('DECODE ERR', 'err'),
+  });
+
+  const decrypt = async (nonce, ct) =>
+    new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, key, ct));
+
+  const handle = async (buf) => {
+    const type = buf[0], nonce = buf.subarray(1, 13), ct = buf.subarray(13);
+    let plain;
+    try { plain = await decrypt(nonce, ct); } catch { return; } // bad tag → drop
+    if (type === 0x01) {                                        // INIT { codec }
+      const info = JSON.parse(new TextDecoder().decode(plain));
+      if (!configured || info.codec !== codec) {
+        codec = info.codec;
+        try { decoder.configure({ codec, optimizeForLatency: true }); configured = true; }
+        catch { fatal('Unsupported codec', codec); }
+      }
+    } else if (type === 0x02) {                                 // MEDIA [ts8][key1][AU]
+      if (!configured) return;
+      const dv = new DataView(plain.buffer, plain.byteOffset, plain.byteLength);
+      const ts = Number(dv.getBigUint64(0, false));
+      const keyframe = plain[8] === 1;
+      if (!gotKey && !keyframe) return;                          // start clean on a keyframe
+      gotKey = true;
+      if (!t0) t0 = Date.now();
+      bytes += buf.byteLength;
+      try {
+        decoder.decode(new EncodedVideoChunk({ type: keyframe ? 'key' : 'delta', timestamp: ts, data: plain.subarray(9) }));
+        setStatus('LIVE', 'live');
+      } catch { /* transient; next keyframe recovers */ }
+    }
+  };
+
+  // ── WebSocket, receive-only, with bounded reconnect for flaky links.
+  //    A rejection (4401) or exhausted retries = the link has burned. ──
+  let retries = 0, everLive = false;
+  const connect = () => {
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/sub/${streamId}?t=${encodeURIComponent(token)}`);
+    ws.binaryType = 'arraybuffer';
+    let chain = Promise.resolve();
+    ws.onopen = () => { retries = 0; setStatus(everLive ? 'LIVE' : 'WAITING', 'live'); };
+    ws.onmessage = (ev) => { everLive = true; const b = new Uint8Array(ev.data); chain = chain.then(() => handle(b)); };
+    ws.onerror = () => setStatus('LINK ERR', 'err');
+    ws.onclose = (ev) => {
+      if (ev.code === 4401 || retries >= 3) {
+        return fatal('Stream ended', 'This link has burned — ask the pilot for a fresh one.');
+      }
+      retries++; setStatus(`RETRY ${retries}/3`, 'err');
+      setTimeout(connect, 1200 * retries);
+    };
+  };
+  connect();
+
+  // ── chrome: snapshot, fullscreen, auto-hide ──
+  $('btnSnap').onclick = () => {
+    const a = document.createElement('a');
+    a.download = `falcontechnix-drone-${new Date().toISOString().replace(/[:.]/g, '-')}.png`;
+    a.href = canvas.toDataURL('image/png'); a.click();
+  };
+  const fs = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  $('btnFs').onclick = fs;
+  canvas.ondblclick = fs;
+  let hideT;
+  const poke = () => { chrome.classList.remove('hidden'); clearTimeout(hideT); hideT = setTimeout(() => chrome.classList.add('hidden'), 3000); };
+  ['mousemove', 'touchstart', 'keydown'].forEach(e => addEventListener(e, poke, { passive: true }));
+  poke();
+})();
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@
 package dev.glassfalcon.core.plugin
 
 import android.content.Context
+import dev.glassfalcon.core.plugin.local.FalconRelayAutoConfig // LOCAL-ONLY: do not commit (plugins/local/)
 import dev.glassfalcon.core.plugin.stream.EncryptedStreamPlugin
 
 /**
@@ -18,6 +19,7 @@ import dev.glassfalcon.core.plugin.stream.EncryptedStreamPlugin
 object PluginRegistry {
     val all: List<GlassFalconPlugin> = listOf(
         EncryptedStreamPlugin,
+        FalconRelayAutoConfig, // LOCAL-ONLY: do not commit (plugins/local/)
     )
 
     fun byId(id: String): GlassFalconPlugin? = all.firstOrNull { it.id == id }

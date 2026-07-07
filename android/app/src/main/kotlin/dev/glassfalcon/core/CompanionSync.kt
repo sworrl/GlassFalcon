@@ -172,6 +172,8 @@ class CompanionClient(private val context: Context) : MapTelemetrySource {
     override val homePoint: StateFlow<Pair<Double, Double>?> = _homePoint
     private val _lastKnown = MutableStateFlow<Pair<Double, Double>?>(null)
     override val lastKnown: StateFlow<Pair<Double, Double>?> = _lastKnown
+    // AirSense isn't synced over the companion link yet; expose an empty flow to satisfy the map source.
+    override val airSense: StateFlow<AirSenseState> = MutableStateFlow(AirSenseState())
 
     data class Found(val name: String, val host: String, val port: Int)
     private val _discovered = MutableStateFlow<List<Found>>(emptyList())

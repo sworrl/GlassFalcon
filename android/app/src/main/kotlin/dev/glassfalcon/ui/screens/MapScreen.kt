@@ -41,6 +41,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import dev.glassfalcon.core.AirSenseState
+import dev.glassfalcon.core.AirSenseTarget
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
@@ -71,6 +73,7 @@ interface MapTelemetrySource {
     val track: StateFlow<List<TrackPoint>>
     val homePoint: StateFlow<Pair<Double, Double>?>
     val lastKnown: StateFlow<Pair<Double, Double>?>
+    val airSense: StateFlow<AirSenseState>
 }
 
 /** DJI-style corner-map sizing. */
@@ -322,6 +325,7 @@ fun FlightMap(
     val track     by vm.track.collectAsState()
     val home      by vm.homePoint.collectAsState()
     val lastKnown by vm.lastKnown.collectAsState()
+    val airSense  by vm.airSense.collectAsState()
 
     val styleUri = remember { resolveStyleUri(ctx) }
     val offline  = remember { styleUri.startsWith("asset://") }
@@ -366,6 +370,21 @@ fun FlightMap(
                         PropertyFactory.fillColor(android.graphics.Color.parseColor(AIRSPACE_RESTRICTED)), PropertyFactory.fillOpacity(0.25f)))
                     style.addLayer(LineLayer("gf-faa-sua-line", "gf-faa-sua").withProperties(
                         PropertyFactory.lineColor(AIRSPACE_RESTRICTED), PropertyFactory.lineWidth(1.5f)))
+
+                    // AirSense (ADS-B / UAT IN) traffic radar — manned aircraft the drone's receiver
+                    // reported (see AirSenseState). Added LAST so blips sit above airspace fills and
+                    // the drone marker. Colour steps by warning level (amber→orange→red). Driven live
+                    // by the LaunchedEffect below; empty until real traffic (or a preview snapshot).
+                    style.addSource(GeoJsonSource("gf-adsb"))
+                    style.addLayer(CircleLayer("gf-adsb-ring", "gf-adsb").withProperties(
+                        PropertyFactory.circleColor(adsbWarnColor()),
+                        PropertyFactory.circleRadius(16f),
+                        PropertyFactory.circleOpacity(0.18f)))
+                    style.addLayer(CircleLayer("gf-adsb-l", "gf-adsb").withProperties(
+                        PropertyFactory.circleColor(adsbWarnColor()),
+                        PropertyFactory.circleRadius(6f),
+                        PropertyFactory.circleStrokeColor("#000000"),
+                        PropertyFactory.circleStrokeWidth(1.5f)))
 
                     styleReady = true
                 }
@@ -429,7 +448,7 @@ fun FlightMap(
 
     var hasFitTrackOnce by remember { mutableStateOf(false) }
 
-    LaunchedEffect(styleReady, track, trailMetric, drone.lat, drone.lon, drone.speed, home, lastKnown) {
+    LaunchedEffect(styleReady, track, trailMetric, drone.lat, drone.lon, drone.speed, home, lastKnown, airSense) {
         val map = mapRef ?: return@LaunchedEffect
         if (!styleReady) return@LaunchedEffect
         val style = map.style ?: return@LaunchedEffect
@@ -439,6 +458,7 @@ fun FlightMap(
         (style.getSource("gf-last") as? GeoJsonSource)?.setGeoJson(pointFc(lastKnown))
         val dronePos = if (drone.hasGpsFix && drone.lat != 0.0) drone.lat to drone.lon else null
         (style.getSource("gf-drone") as? GeoJsonSource)?.setGeoJson(pointFc(dronePos))
+        (style.getSource("gf-adsb") as? GeoJsonSource)?.setGeoJson(airSenseFc(airSense.targets))
 
         if (fitTrackOnLoad) {
             // Frame the WHOLE recorded path once, not "current position at a live-flying zoom"
@@ -536,6 +556,25 @@ private fun circle(id: String, src: String, color: String, r: Float) =
 private fun pointFc(p: Pair<Double, Double>?): FeatureCollection =
     if (p == null) FeatureCollection.fromFeatures(emptyArray())
     else FeatureCollection.fromFeature(Feature.fromGeometry(Point.fromLngLat(p.second, p.first)))
+
+/** One point per valid AirSense target, carrying its warning level so [adsbWarnColor] can tint it. */
+private fun airSenseFc(targets: List<AirSenseTarget>): FeatureCollection =
+    FeatureCollection.fromFeatures(targets.filter { it.valid }.map { t ->
+        val props = com.google.gson.JsonObject().apply {
+            addProperty("warn", t.warningLevel)
+            addProperty("icao", t.icao)
+        }
+        Feature.fromGeometry(Point.fromLngLat(t.lon, t.lat), props)
+    })
+
+/** Radar blip colour by AirSense warning level: amber (low) → orange (2) → red (3+). */
+private fun adsbWarnColor(): Expression =
+    Expression.step(
+        Expression.toNumber(Expression.get("warn")),
+        Expression.color(android.graphics.Color.parseColor("#FFCC00")),
+        Expression.stop(2, Expression.color(android.graphics.Color.parseColor("#FF7700"))),
+        Expression.stop(3, Expression.color(android.graphics.Color.parseColor("#FF2222"))),
+    )
 
 /** Smart auto-zoom: tightest useful zoom when stationary, pull back as ground speed rises
  *  so faster flight shows more of what's ahead. ~18.5 at rest → ~14 at 25 m/s. */

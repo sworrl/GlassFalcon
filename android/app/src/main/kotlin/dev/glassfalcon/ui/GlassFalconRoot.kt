@@ -208,6 +208,7 @@ private fun SettingsOverlay(vm: FlightViewModel, onClose: () -> Unit) {
         "Voice"       to Icons.Filled.RecordVoiceOver,
         "Plugins"     to Icons.Filled.Extension,
         "Flights"     to Icons.Filled.EmojiEvents,
+        "Dev"         to Icons.Filled.Build,
     )
 
     // These screens use default Material3 sizing (built for a normal portrait phone UI) while
@@ -298,6 +299,7 @@ private fun SettingsOverlay(vm: FlightViewModel, onClose: () -> Unit) {
                 9 -> VoiceSettingsScreen(vm)
                 10 -> PluginsScreen(vm)
                 11 -> FlightRecordsScreen(vm)
+                12 -> DevToolsScreen(vm)
             }
         }
     }

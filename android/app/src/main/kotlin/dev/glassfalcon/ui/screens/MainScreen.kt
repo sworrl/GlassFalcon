@@ -276,6 +276,15 @@ fun MainScreen(vm: FlightViewModel, onOpenSettings: () -> Unit) {
                     onClick = { vm.enterPreviewMode() },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = TextSec),
                 ) { Text("▶  Preview HUD (no hardware)", fontSize = 13.sp) }
+                Spacer(Modifier.height(10.dp))
+                // Dev: seed synthetic AirSense/ADS-B targets and drop into the HUD so the map radar
+                // layer can be checked without live traffic (the drone hears none indoors). Tap
+                // again from the HUD map has no affordance, so this just turns it on and shows it.
+                var radarPreview by remember { mutableStateOf(false) }
+                OutlinedButton(
+                    onClick = { radarPreview = vm.toggleAirSenseRadarPreview(); if (radarPreview) vm.enterPreviewMode() },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = if (radarPreview) DjiGreen else TextSec),
+                ) { Text(if (radarPreview) "✈  AirSense Radar: ON (open map)" else "✈  Preview AirSense Radar", fontSize = 13.sp) }
                 Spacer(Modifier.height(20.dp))
                 Text("v${BuildConfig.VERSION_NAME.replace('-', ' ')}", color = TextSec.copy(alpha = 0.6f), fontSize = 11.sp)
             }
@@ -946,10 +955,34 @@ private fun NavClusterIcon(iconRes: Int, color: Color, enabled: Boolean, onClick
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
+        HudGlowIcon(iconRes, if (enabled) color else color.copy(alpha = 0.35f))
+    }
+}
+
+/** HUD icons are Images, so the HUD's text-only glow (the LocalTextStyle Shadow up in the HUD Box)
+ *  never reaches them and they wash out against bright sky, which is what most of the feed is. Give
+ *  them the same trick the text uses: a dark omnidirectional halo. Eight near-opaque black copies
+ *  fanned around a small radius put a dark→light edge on every side of the glyph, so it reads on
+ *  sky AND on dark ground, matching the "clear glass + glow, not tinted fill" HUD rule. */
+@Composable
+private fun HudGlowIcon(iconRes: Int, tint: Color, sizeDp: Dp = 22.dp) {
+    val painter = painterResource(iconRes)
+    val r = with(LocalDensity.current) { 1.5.dp.toPx() }
+    Box(contentAlignment = Alignment.Center) {
+        for (a in 0 until 8) {
+            val ang = a * (Math.PI / 4)
+            val dx = (r * kotlin.math.cos(ang)).toFloat()
+            val dy = (r * kotlin.math.sin(ang)).toFloat()
+            Image(
+                painter = painter, contentDescription = null,
+                colorFilter = ColorFilter.tint(Color.Black.copy(alpha = 0.85f)),
+                modifier = Modifier.size(sizeDp).graphicsLayer { translationX = dx; translationY = dy },
+            )
+        }
         Image(
-            painter = painterResource(iconRes), contentDescription = null,
-            colorFilter = ColorFilter.tint(if (enabled) color else color.copy(alpha = 0.35f)),
-            modifier = Modifier.size(22.dp),
+            painter = painter, contentDescription = null,
+            colorFilter = ColorFilter.tint(tint),
+            modifier = Modifier.size(sizeDp),
         )
     }
 }
@@ -993,11 +1026,7 @@ private fun VisionModeIcon(iconRes: Int, color: Color, enabled: Boolean, onClick
         Modifier.size(38.dp).clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Image(
-            painter = painterResource(iconRes), contentDescription = null,
-            colorFilter = ColorFilter.tint(if (enabled) color else color.copy(alpha = 0.35f)),
-            modifier = Modifier.size(22.dp),
-        )
+        HudGlowIcon(iconRes, if (enabled) color else color.copy(alpha = 0.35f))
     }
 }
 

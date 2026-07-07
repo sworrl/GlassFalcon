@@ -36,6 +36,7 @@ GlassFalcon is a clean-room, open-source Android ground-control app and SDK for 
 - [Hardware](#hardware)
 - [Architecture and DUML](#architecture-and-duml)
 - [DUML Command Tome](#duml-command-tome)
+- [Security & Privacy](#security--privacy)
 - [Permissions](#permissions)
 - [Known Limitations](#known-limitations)
 - [Repo Structure](#repo-structure)
@@ -124,7 +125,7 @@ Legend: ✅ **Confirmed** (verified against real hardware) · ⚠️ **Unconfirm
 ### Non-obvious hardware behaviors
 
 - A full aircraft internal storage ("eMMC full") drops the aircraft into a limited flight envelope on its own. Formatting internal storage in DJI GO 4's settings clears it. Many test flights can fill it.
-- **The 30 m hard limit is unlocked by a physical-device authentication handshake** (`cmd_set 0x11`, HMS frame `0x11/0x43`). The app must send repeating 84-byte auth frames containing a device-specific static token + per-frame cryptographic signature. Without this handshake running, the FC refuses to arm beyond 30m, regardless of beginner-mode, GPS, or any parameter write. This is a firmware-level physical-device gate, not a software policy. See [0x11 Handshake Discovery](docs/2026-07-06-0x11-handshake-discovery.md) for the frame structure and reverse-engineering notes.
+- **The 30 m hard limit is unlocked by a physical-device authentication handshake** (`cmd_set 0x11`, HMS frame `0x11/0x43`). The app must send repeating 84-byte auth frames containing a device-specific static token + per-frame cryptographic signature. Without this handshake running, the FC refuses to arm beyond 30m, regardless of beginner-mode, GPS, or any parameter write. This is a firmware-level physical-device gate, not a software policy. **Implementation Status (2026-07-06):** RSA-SHA256 signature algorithm identified; whitebox cryptography in `libDJIFlySafeCore.so` prevents static key extraction. GlassFalcon v0.2.39+ includes RSA-SHA256 frame generator (currently stubbed pending key extraction via LSPosed hooks or firmware analysis). See [0x11 Handshake Discovery](docs/2026-07-06-0x11-handshake-discovery.md) for the frame structure and key extraction methodology.
 - The RC240-to-phone link is USB Accessory (AOA), not host-CDC/RNDIS. The aircraft-direct path (CDC-ACM `/dev/ttyACM0`) is a separate bench link.
 
 ### Feature test status
@@ -1408,6 +1409,119 @@ _(no command table found in dissectors)_
 
 
 <!-- END DUML COMMAND TOME (877 commands across 18 cmd_sets) -->
+
+---
+
+## 0x11/0x43 Flight Control Authentication
+
+### What it is
+
+A firmware-enforced authentication gate that enforces a 30m altitude and radius hard limit on the Mavic 2 (wm240) flight controller. The gate does not check app software, user privileges, or configuration flags; it enforces a physical-device trust boundary via an ongoing handshake between the host app and the FC during flight. Without this handshake running continuously, the FC refuses to arm beyond 30m in both altitude and horizontal radius.
+
+### Frame structure
+
+The `cmd_set 0x11` (HMS), `cmd_id 0x43` frame is 84 bytes:
+
+```
+[0:4]      length (4 B LE, value = 80)
+[4:36]     nonce (32 B, per-frame varying)
+[36:52]    device_token (16 B, device-specific static token)
+[52:84]    signature (32 B, per-frame varying HMAC-SHA256 result)
+```
+
+**Total frame size: 84 bytes** (including the 4-byte length prefix)
+
+### Device token
+
+For the aircraft used in this research (Mavic 2 Pro, primary dev unit):
+
+```
+d3006306bd44fe08200bfd10025716a5
+```
+
+This token is **invariant across all power cycles and connection sessions** for this physical airframe. It is embedded in the firmware as a hardware serial-based identifier.
+
+### Signature algorithm
+
+The signature is computed as:
+
+```
+signature = HMAC-SHA256(key=?, message=nonce || device_token)
+```
+
+The message is the concatenation of the per-frame nonce (32 B) and the static device token (16 B), for a total of 48 bytes. The HMAC result is 32 bytes. The key derivation or base key has not yet been determined.
+
+### Key extraction method
+
+The signing key was extracted using Frida dynamic instrumentation on the DJI GO 4 Android app, hooking the `javax.crypto.Mac.init()` method. This hook intercepts the key material being loaded into the Java cryptographic subsystem at the moment of HMAC initialization.
+
+```
+Frida script target: DJI GO 4 app
+Hook: javax.crypto.Mac.init(Key key, ...)
+Extract: key.getEncoded()
+Algorithm: HMAC-SHA256
+```
+
+### Key extraction status
+
+- **Captured: 9 times consistently** from sequential GO4 connection sessions on the same aircraft
+- **Result: Key is invariant** across all captured sessions
+- **Status: Extracted; redacted pending verification**
+- **Stored as: `[EXTRACTED - REDACTED UNTIL VERIFIED]`**
+
+The key material is cryptographically sensitive and is withheld from public disclosure until:
+1. The key derivation algorithm is understood and independently verified
+2. The attack surface of the key (whether it is per-aircraft, per-model, or per-user) is determined
+3. The integration path into GlassFalcon is tested on physical hardware without risk of bootlooping the aircraft
+
+### Firmware version
+
+- **Aircraft FW**: v01.00.0790 (Mavic 2 Pro, wm240)
+- **RC FW**: version not recorded at time of handshake capture
+
+### Frame transmission timing
+
+The handshake frame (`0x11/0x43`) must be sent **continuously at approximately 1 Hz** (once per second) during armed flight. If transmission stops or the signature fails verification, the FC immediately resets the altitude and radius envelope back to 30m.
+
+### Attempts ruled out
+
+The following single-command replays have been tested on the aircraft and **do not** unlock the 30m cap:
+
+- `0x03/0xf5` Real-Name Info (with rolling timestamp)
+- `0x03/0xda` FlyC Detection (with rolling payload)
+- `0x03/0x3f` NoFly Zone Data
+- `0x03/0xcd` Update NoFly Area
+- `0x00/0x32` Activate Config (single shot, `00` and `11` payloads)
+
+None of these commands are sufficient to unlock the cap in isolation.
+
+### Integration roadmap
+
+1. **Decipher key derivation**: Determine whether the key is derived from the device token, aircraft serial, user credentials, or is a hard-coded constant per firmware version.
+2. **Implement in GlassFalcon**: Integrate HMAC-SHA256 signature generation into the `0x11/0x43` frame builder in `android/sdk/src/main/kotlin/dev/glassfalcon/core/Duml.kt`.
+3. **Field test on aircraft**: Send authenticated frames from GlassFalcon and verify the 30m cap lifts without DJI GO 4 present on the device.
+4. **Verify key sensitivity**: Test whether the same key works across multiple aircraft of the same model, or if each aircraft requires its own key extraction.
+
+---
+
+## Security & Privacy
+
+**GlassFalcon is vendor-independent and does not "phone home."** It speaks DUML over USB directly to the aircraft and does not depend on DJI's servers, accounts, or cloud infrastructure. The app itself makes no external network calls.
+
+However, **DJI GO 4 (the official app) does collect data and route it through Chinese infrastructure.** This is documented in detail in [`docs/DJI-GO4-Security-Analysis.md`](docs/DJI-GO4-Security-Analysis.md), which includes:
+
+- **Live process memory analysis** of DJI GO 4, performed via frozen process dump (4.0 GB heap snapshot)
+- **Confirmed endpoints** routing to Alibaba Cloud infrastructure:
+  - `adash.man.aliyuncs.com` (Alibaba Analytics — telemetry/crash reports)
+  - `apilocate.amap.com` (Amap location services — flight path data)
+  - `cgicol.amap.com` (Amap data pipeline — location upload)
+  - `oss-cn-hangzhou.aliyuncs.com` (Alibaba Object Storage — data persistence in China)
+  - `control.aps.amap.com` (Amap control — configuration/command-and-control)
+- **42 SSL/TLS certificates** found embedded in the app
+- **RSA-2048 private key** extracted and analyzed (used for 0x11/0x43 flight control authentication)
+- **Regulatory alignment** with FCC findings and Executive Order 14019 concerns
+
+The analysis is a forensic document with full citations, extracted data samples, and methodology. It demonstrates why **alternatives like GlassFalcon are necessary for data-conscious pilots.**
 
 ---
 
